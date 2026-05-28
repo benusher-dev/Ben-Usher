@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useApp } from '../store/AppContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
@@ -7,16 +7,49 @@ import { TemplateCard } from '../components/templates/TemplateCard'
 import { WorkoutSummary } from '../components/sessions/WorkoutSummary'
 import { generateId } from '../utils/dateHelpers'
 
+const REST_PRESETS = [
+  { label: '30s', seconds: 30 },
+  { label: '45s', seconds: 45 },
+  { label: '1m',  seconds: 60 },
+  { label: '90s', seconds: 90 },
+  { label: '2m',  seconds: 120 },
+  { label: '3m',  seconds: 180 },
+]
+
 function buildLogExercises(template) {
   return template.exercises.map(ex => ({
     id: generateId(),
     exerciseId: ex.id,
     name: ex.name,
+    restSeconds: ex.restSeconds ?? 90,
     sets: Array.from({ length: Math.max(1, ex.sets || 1) }, () => ({
       reps: ex.reps ?? '',
       weight: ex.weight ?? '',
     })),
   }))
+}
+
+function formatCountdown(s) {
+  const m = Math.floor(s / 60)
+  const sec = s % 60
+  return m > 0 ? `${m}:${String(sec).padStart(2, '0')}` : `${s}s`
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    ;[0, 0.2, 0.4].forEach(offset => {
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = 880
+      gain.gain.setValueAtTime(0.4, ctx.currentTime + offset)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.15)
+      osc.start(ctx.currentTime + offset)
+      osc.stop(ctx.currentTime + offset + 0.15)
+    })
+  } catch {}
 }
 
 function SetRow({ set, setIndex, onChange }) {
@@ -44,6 +77,92 @@ function SetRow({ set, setIndex, onChange }) {
   )
 }
 
+function RestTimerRow({ exIndex, restSeconds, onChangeRest, timer, onStart, onStop }) {
+  const isActive = timer?.exIndex === exIndex && !timer.done
+  const isDone  = timer?.exIndex === exIndex &&  timer.done
+
+  if (isActive) {
+    const progress = timer.remaining / timer.total
+    const circumference = 2 * Math.PI * 10
+    return (
+      <div className="mt-3 flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-3">
+          {/* Mini circular progress */}
+          <svg width="28" height="28" viewBox="0 0 28 28" className="flex-shrink-0">
+            <circle cx="14" cy="14" r="10" fill="none" stroke="#e0e7ff" strokeWidth="3" />
+            <circle
+              cx="14" cy="14" r="10"
+              fill="none" stroke="#6366f1" strokeWidth="3"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progress)}
+              strokeLinecap="round"
+              transform="rotate(-90 14 14)"
+            />
+          </svg>
+          <span className="text-indigo-700 font-bold text-xl tabular-nums leading-none">
+            {formatCountdown(timer.remaining)}
+          </span>
+          <span className="text-indigo-400 text-xs">rest</span>
+        </div>
+        <button
+          onClick={onStop}
+          className="text-xs text-indigo-500 font-semibold hover:text-indigo-700 px-2 py-1 rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          Skip
+        </button>
+      </div>
+    )
+  }
+
+  if (isDone) {
+    return (
+      <div className="mt-3 flex items-center justify-between bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
+        <div className="flex items-center gap-2">
+          <svg className="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          <span className="text-emerald-700 font-semibold text-sm">Rest complete — go!</span>
+        </div>
+        <button
+          onClick={onStop}
+          className="text-xs text-emerald-600 font-semibold hover:text-emerald-800 px-2 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
+        >
+          Dismiss
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="mt-3 flex items-center gap-2">
+      <svg className="h-4 w-4 text-gray-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+      </svg>
+      <div className="flex gap-1 overflow-x-auto flex-1" style={{ scrollbarWidth: 'none' }}>
+        {REST_PRESETS.map(p => (
+          <button
+            key={p.seconds}
+            onClick={() => onChangeRest(exIndex, p.seconds)}
+            className={`flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
+              restSeconds === p.seconds
+                ? 'bg-indigo-100 text-indigo-700'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => onStart(exIndex, restSeconds)}
+        className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
+      >
+        Start
+      </button>
+    </div>
+  )
+}
+
 export function LogWorkout() {
   const { templates, sessions, logTemplateId, setLogTemplateId, addSession, setActivePage } = useApp()
   const [step, setStep] = useState(1)
@@ -51,35 +170,64 @@ export function LogWorkout() {
   const [logExercises, setLogExercises] = useState([])
   const [notes, setNotes] = useState('')
   const [summaryData, setSummaryData] = useState(null)
+
+  // Rest timer state
+  const [timer, setTimer] = useState(null) // { exIndex, remaining, total, done }
+  const timerRef = useRef(null)
+
   const startedAtRef = useRef(null)
 
-  // Sync with logTemplateId set externally (e.g. from Workouts page)
+  // Consume logTemplateId as a one-shot signal (e.g. launched from Workouts page)
   useEffect(() => {
-    if (logTemplateId) {
-      const t = templates.find(t => t.id === logTemplateId)
-      if (t) {
-        setSelectedTemplate(t)
-        setLogExercises(buildLogExercises(t))
-        setStep(2)
-        if (!startedAtRef.current) {
-          startedAtRef.current = new Date().toISOString()
-        }
-      }
-    } else {
-      setStep(1)
-      setSelectedTemplate(null)
-      setLogExercises([])
-      setSummaryData(null)
-      startedAtRef.current = null
-    }
+    if (!logTemplateId) return
+    const t = templates.find(t => t.id === logTemplateId)
+    setLogTemplateId(null) // consume immediately
+    if (t) beginWorkout(t)
   }, [logTemplateId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  function selectTemplate(template) {
+  // Cleanup timer on unmount
+  useEffect(() => () => clearInterval(timerRef.current), [])
+
+  function beginWorkout(template) {
+    clearInterval(timerRef.current)
     setSelectedTemplate(template)
     setLogExercises(buildLogExercises(template))
-    setLogTemplateId(template.id)
+    setNotes('')
+    setTimer(null)
     setStep(2)
     startedAtRef.current = new Date().toISOString()
+  }
+
+  function selectTemplate(template) {
+    beginWorkout(template)
+  }
+
+  // Timer controls
+  function startTimer(exIndex, seconds) {
+    clearInterval(timerRef.current)
+    setTimer({ exIndex, remaining: seconds, total: seconds, done: false })
+    timerRef.current = setInterval(() => {
+      setTimer(prev => {
+        if (!prev) return null
+        if (prev.remaining <= 1) {
+          clearInterval(timerRef.current)
+          playBeep()
+          return { ...prev, remaining: 0, done: true }
+        }
+        return { ...prev, remaining: prev.remaining - 1 }
+      })
+    }, 1000)
+  }
+
+  function stopTimer() {
+    clearInterval(timerRef.current)
+    setTimer(null)
+  }
+
+  function updateRestSeconds(exIndex, seconds) {
+    setLogExercises(prev =>
+      prev.map((ex, i) => i === exIndex ? { ...ex, restSeconds: seconds } : ex)
+    )
   }
 
   function updateSet(exIndex, setIndex, updatedSet) {
@@ -112,8 +260,8 @@ export function LogWorkout() {
 
   function handleFinish() {
     if (!selectedTemplate) return
+    clearInterval(timerRef.current)
 
-    // Capture previous session for the same template BEFORE adding the new one
     const prevSession = sessions
       .filter(s => s.templateId === selectedTemplate.id)
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0] ?? null
@@ -123,7 +271,9 @@ export function LogWorkout() {
       templateName: selectedTemplate.name,
       notes: notes.trim(),
       exercises: logExercises.map(ex => ({
-        ...ex,
+        id: ex.id,
+        exerciseId: ex.exerciseId,
+        name: ex.name,
         sets: ex.sets.map(s => ({
           reps: Number(s.reps) || 0,
           weight: s.weight === '' ? null : Number(s.weight),
@@ -138,16 +288,27 @@ export function LogWorkout() {
   }
 
   function handleCancel() {
+    clearInterval(timerRef.current)
+    setTimer(null)
+    setStep(1)
+    setSelectedTemplate(null)
+    setLogExercises([])
+    setNotes('')
     startedAtRef.current = null
-    setLogTemplateId(null)
   }
 
   function handleSummaryDone() {
-    setLogTemplateId(null)
+    setStep(1)
+    setSelectedTemplate(null)
+    setLogExercises([])
+    setNotes('')
+    setSummaryData(null)
+    setTimer(null)
+    startedAtRef.current = null
     setActivePage('history')
   }
 
-  // Step 1: Template picker
+  // ── Step 1: Template picker ──────────────────────────────────────────────
   if (step === 1) {
     return (
       <div className="flex flex-col h-full">
@@ -165,11 +326,7 @@ export function LogWorkout() {
             <div className="flex flex-col gap-3">
               <p className="text-sm text-gray-500 font-medium">Choose a workout to log:</p>
               {templates.map(t => (
-                <TemplateCard
-                  key={t.id}
-                  template={t}
-                  onSelect={() => selectTemplate(t)}
-                />
+                <TemplateCard key={t.id} template={t} onSelect={() => selectTemplate(t)} />
               ))}
             </div>
           )}
@@ -178,7 +335,7 @@ export function LogWorkout() {
     )
   }
 
-  // Step 3: Summary
+  // ── Step 3: Post-workout summary ─────────────────────────────────────────
   if (step === 3 && summaryData) {
     return (
       <div className="flex flex-col h-full">
@@ -194,7 +351,7 @@ export function LogWorkout() {
     )
   }
 
-  // Step 2: Logging form
+  // ── Step 2: Logging form ─────────────────────────────────────────────────
   if (!selectedTemplate) return null
 
   return (
@@ -202,10 +359,7 @@ export function LogWorkout() {
       <PageHeader
         title={selectedTemplate.name}
         action={
-          <button
-            onClick={handleCancel}
-            className="text-sm text-gray-500 hover:text-gray-700 font-medium"
-          >
+          <button onClick={handleCancel} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
             Cancel
           </button>
         }
@@ -247,6 +401,16 @@ export function LogWorkout() {
               >
                 + Add Set
               </button>
+
+              {/* Rest timer */}
+              <RestTimerRow
+                exIndex={exIdx}
+                restSeconds={ex.restSeconds}
+                onChangeRest={updateRestSeconds}
+                timer={timer}
+                onStart={startTimer}
+                onStop={stopTimer}
+              />
             </div>
           ))}
 
