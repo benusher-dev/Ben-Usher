@@ -1,0 +1,32 @@
+import { AppProvider, useApp } from './store/AppContext'
+import { BottomNav } from './components/layout/BottomNav'
+import { Dashboard } from './pages/Dashboard'
+import { Workouts } from './pages/Workouts'
+import { LogWorkout } from './pages/LogWorkout'
+import { History } from './pages/History'
+import { Progress } from './pages/Progress'
+
+function Pages() {
+  const { activePage } = useApp()
+
+  return (
+    <main className="flex flex-col h-screen pb-[calc(4rem+env(safe-area-inset-bottom))]">
+      <div className="flex-1 overflow-hidden flex flex-col">
+        {activePage === 'dashboard' && <Dashboard />}
+        {activePage === 'workouts' && <Workouts />}
+        {activePage === 'log' && <LogWorkout />}
+        {activePage === 'history' && <History />}
+        {activePage === 'progress' && <Progress />}
+      </div>
+    </main>
+  )
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <Pages />
+      <BottomNav />
+    </AppProvider>
+  )
+}
