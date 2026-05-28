@@ -1,10 +1,11 @@
+import { useMemo } from 'react'
 import { formatDuration } from '../../utils/dateHelpers'
 import { MuscleDiagram } from './MuscleDiagram'
 import { Button } from '../ui/Button'
 
 function calcStats(exercises) {
-  const maxWeight = (sets) => sets.length ? Math.max(0, ...sets.map(s => s.weight || 0)) : 0
-  const totalReps = (sets) => sets.reduce((sum, s) => sum + (s.reps || 0), 0)
+  const maxWeight = sets => sets.length ? Math.max(0, ...sets.map(s => s.weight || 0)) : 0
+  const totalReps = sets => sets.reduce((sum, s) => sum + (s.reps || 0), 0)
   return exercises.map(ex => ({
     name: ex.name,
     exerciseId: ex.exerciseId,
@@ -19,7 +20,23 @@ function Delta({ value, unit }) {
   return <span className="text-xs font-medium text-red-500">↓ {value} {unit}</span>
 }
 
-export function WorkoutSummary({ session, previousSession, onDone }) {
+// Compute all-time maxes from a list of sessions (excluding current)
+function buildHistoricalMaxes(historicalSessions) {
+  const map = {}
+  historicalSessions.forEach(s => {
+    s.exercises.forEach(ex => {
+      const key = ex.name
+      if (!map[key]) map[key] = { maxWeight: 0, maxReps: 0 }
+      ex.sets.forEach(set => {
+        if ((set.weight || 0) > map[key].maxWeight) map[key].maxWeight = set.weight || 0
+        if ((set.reps || 0) > map[key].maxReps) map[key].maxReps = set.reps || 0
+      })
+    })
+  })
+  return map
+}
+
+export function WorkoutSummary({ session, previousSession, historicalSessions, onDone }) {
   const currStats = calcStats(session.exercises)
 
   const prevLookup = {}
@@ -30,17 +47,40 @@ export function WorkoutSummary({ session, previousSession, onDone }) {
     }
   }
 
+  const historicalMaxes = useMemo(
+    () => buildHistoricalMaxes(historicalSessions ?? []),
+    [historicalSessions]
+  )
+
+  const newPRs = useMemo(() => {
+    const prs = new Set()
+    currStats.forEach(curr => {
+      const hist = historicalMaxes[curr.name]
+      if (!hist) return // first time doing this exercise — handled separately
+      if (curr.maxWeight > 0 && curr.maxWeight > hist.maxWeight) prs.add(`${curr.name}_weight`)
+      if (curr.totalReps > 0 && curr.totalReps > hist.maxReps) prs.add(`${curr.name}_reps`)
+    })
+    return prs
+  }, [currStats, historicalMaxes])
+
+  const hasPRs = newPRs.size > 0
+
   return (
     <div className="flex flex-col gap-5">
       {/* Header */}
       <div className="text-center py-2">
-        <div className="text-5xl mb-3">🎉</div>
+        <div className="text-5xl mb-3">{hasPRs ? '🏆' : '🎉'}</div>
         <h2 className="text-2xl font-bold text-gray-900">Workout Complete!</h2>
         {session.durationMinutes != null && (
           <p className="text-sm text-gray-500 mt-1">
-            Duration:{' '}
-            <span className="font-semibold text-indigo-600">{formatDuration(session.durationMinutes)}</span>
+            Duration: <span className="font-semibold text-indigo-600">{formatDuration(session.durationMinutes)}</span>
           </p>
+        )}
+        {hasPRs && (
+          <div className="mt-2 inline-flex items-center gap-1.5 bg-amber-50 border border-amber-200 text-amber-700 px-3 py-1 rounded-full text-xs font-semibold">
+            <span>🏆</span>
+            New personal record{newPRs.size > 1 ? 's' : ''}!
+          </div>
         )}
       </div>
 
@@ -51,6 +91,8 @@ export function WorkoutSummary({ session, previousSession, onDone }) {
           {currStats.map((curr, i) => {
             const prev = prevLookup[curr.exerciseId] || prevLookup[curr.name]
             const isNew = !prev
+            const prWeight = newPRs.has(`${curr.name}_weight`)
+            const prReps = newPRs.has(`${curr.name}_reps`)
 
             if (isNew) {
               return (
@@ -68,18 +110,27 @@ export function WorkoutSummary({ session, previousSession, onDone }) {
             const repsDelta = curr.totalReps - prevStats.totalReps
 
             return (
-              <div key={i} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-sm font-medium text-gray-900 mb-1.5">{curr.name}</p>
+              <div key={i} className={`rounded-xl p-3 ${prWeight || prReps ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50'}`}>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <p className="text-sm font-medium text-gray-900">{curr.name}</p>
+                  {(prWeight || prReps) && <span className="text-xs">🏆</span>}
+                </div>
                 <div className="flex gap-4">
                   {curr.maxWeight > 0 && (
                     <div>
                       <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Max weight</p>
-                      <Delta value={weightDelta} unit="kg" />
+                      <div className="flex items-center gap-1">
+                        <Delta value={weightDelta} unit="kg" />
+                        {prWeight && <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1 rounded">PR</span>}
+                      </div>
                     </div>
                   )}
                   <div>
                     <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Total reps</p>
-                    <Delta value={repsDelta} unit="reps" />
+                    <div className="flex items-center gap-1">
+                      <Delta value={repsDelta} unit="reps" />
+                      {prReps && <span className="text-[10px] font-bold text-amber-600 bg-amber-100 px-1 rounded">PR</span>}
+                    </div>
                   </div>
                 </div>
               </div>

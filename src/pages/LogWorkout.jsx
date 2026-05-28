@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TemplateCard } from '../components/templates/TemplateCard'
 import { WorkoutSummary } from '../components/sessions/WorkoutSummary'
+import { PlateCalculator } from '../components/tools/PlateCalculator'
 import { generateId } from '../utils/dateHelpers'
 
 const REST_PRESETS = [
@@ -193,6 +194,7 @@ export function LogWorkout() {
 
   // Rest timer state
   const [timer, setTimer] = useState(null) // { timerId, remaining, total, done }
+  const [showPlateCalc, setShowPlateCalc] = useState(false)
   const timerRef = useRef(null)
 
   const startedAtRef = useRef(null)
@@ -288,7 +290,8 @@ export function LogWorkout() {
     if (!selectedTemplate) return
     clearInterval(timerRef.current)
 
-    const prevSession = sessions
+    const historicalSessions = sessions // capture before addSession mutates state
+    const prevSession = historicalSessions
       .filter(s => s.templateId === selectedTemplate.id)
       .sort((a, b) => new Date(b.date) - new Date(a.date))[0] ?? null
 
@@ -309,7 +312,7 @@ export function LogWorkout() {
 
     const newSession = addSession(sessionPayload, startedAtRef.current)
     startedAtRef.current = null
-    setSummaryData({ session: newSession, previousSession: prevSession })
+    setSummaryData({ session: newSession, previousSession: prevSession, historicalSessions })
     setStep(3)
   }
 
@@ -370,6 +373,7 @@ export function LogWorkout() {
           <WorkoutSummary
             session={summaryData.session}
             previousSession={summaryData.previousSession}
+            historicalSessions={summaryData.historicalSessions}
             onDone={handleSummaryDone}
           />
         </div>
@@ -381,13 +385,26 @@ export function LogWorkout() {
   if (!selectedTemplate) return null
 
   return (
+    <>
     <div className="flex flex-col h-full">
       <PageHeader
         title={selectedTemplate.name}
         action={
-          <button onClick={handleCancel} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
-            Cancel
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowPlateCalc(true)}
+              className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+              title="Plate Calculator"
+            >
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12h8M12 8v8" />
+              </svg>
+            </button>
+            <button onClick={handleCancel} className="text-sm text-gray-500 hover:text-gray-700 font-medium">
+              Cancel
+            </button>
+          </div>
         }
       />
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
@@ -496,5 +513,7 @@ export function LogWorkout() {
         </div>
       </div>
     </div>
+    {showPlateCalc && <PlateCalculator onClose={() => setShowPlateCalc(false)} />}
+    </>
   )
 }

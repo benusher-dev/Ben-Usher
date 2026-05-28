@@ -6,6 +6,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { SessionCard } from '../components/sessions/SessionCard'
 import { SessionDetail } from '../components/sessions/SessionDetail'
 import { Button } from '../components/ui/Button'
+import { TrainingCalendar } from '../components/history/TrainingCalendar'
 
 export function History() {
   const { sessions, deleteSession, setActivePage } = useApp()
@@ -33,10 +34,13 @@ export function History() {
             onAction={() => setActivePage('log')}
           />
         ) : (
-          <div className="flex flex-col gap-3">
-            {sorted.map(s => (
-              <SessionCard key={s.id} session={s} onClick={() => setSelected(s)} />
-            ))}
+          <div className="flex flex-col gap-4">
+            <TrainingCalendar sessions={sessions} />
+            <div className="flex flex-col gap-3">
+              {sorted.map(s => (
+                <SessionCard key={s.id} session={s} onClick={() => setSelected(s)} />
+              ))}
+            </div>
           </div>
         )}
       </div>
