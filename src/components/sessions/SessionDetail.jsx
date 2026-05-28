@@ -1,4 +1,5 @@
 import { formatDate, formatTime, formatDuration } from '../../utils/dateHelpers'
+import { MuscleDiagram } from './MuscleDiagram'
 
 export function SessionDetail({ session }) {
   return (
@@ -45,6 +46,14 @@ export function SessionDetail({ session }) {
             ))}
           </div>
         ))}
+      </div>
+
+      {/* Muscle diagram */}
+      <div>
+        <p className="text-sm font-semibold text-gray-700 mb-3">Muscles Trained</p>
+        <div className="bg-gray-50 rounded-2xl p-4">
+          <MuscleDiagram exercises={session.exercises} />
+        </div>
       </div>
     </div>
   )

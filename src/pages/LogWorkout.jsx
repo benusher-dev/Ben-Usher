@@ -4,6 +4,7 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
 import { TemplateCard } from '../components/templates/TemplateCard'
+import { WorkoutSummary } from '../components/sessions/WorkoutSummary'
 import { generateId } from '../utils/dateHelpers'
 
 function buildLogExercises(template) {
@@ -44,14 +45,15 @@ function SetRow({ set, setIndex, onChange }) {
 }
 
 export function LogWorkout() {
-  const { templates, logTemplateId, setLogTemplateId, addSession, setActivePage } = useApp()
+  const { templates, sessions, logTemplateId, setLogTemplateId, addSession, setActivePage } = useApp()
   const [step, setStep] = useState(1)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [logExercises, setLogExercises] = useState([])
   const [notes, setNotes] = useState('')
+  const [summaryData, setSummaryData] = useState(null)
   const startedAtRef = useRef(null)
 
-  // Sync with logTemplateId from context (e.g., launched from Workouts page)
+  // Sync with logTemplateId set externally (e.g. from Workouts page)
   useEffect(() => {
     if (logTemplateId) {
       const t = templates.find(t => t.id === logTemplateId)
@@ -67,6 +69,7 @@ export function LogWorkout() {
       setStep(1)
       setSelectedTemplate(null)
       setLogExercises([])
+      setSummaryData(null)
       startedAtRef.current = null
     }
   }, [logTemplateId]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -109,7 +112,13 @@ export function LogWorkout() {
 
   function handleFinish() {
     if (!selectedTemplate) return
-    const session = {
+
+    // Capture previous session for the same template BEFORE adding the new one
+    const prevSession = sessions
+      .filter(s => s.templateId === selectedTemplate.id)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0] ?? null
+
+    const sessionPayload = {
       templateId: selectedTemplate.id,
       templateName: selectedTemplate.name,
       notes: notes.trim(),
@@ -121,10 +130,11 @@ export function LogWorkout() {
         })),
       })),
     }
-    addSession(session, startedAtRef.current)
+
+    const newSession = addSession(sessionPayload, startedAtRef.current)
     startedAtRef.current = null
-    setLogTemplateId(null)
-    setActivePage('history')
+    setSummaryData({ session: newSession, previousSession: prevSession })
+    setStep(3)
   }
 
   function handleCancel() {
@@ -132,6 +142,12 @@ export function LogWorkout() {
     setLogTemplateId(null)
   }
 
+  function handleSummaryDone() {
+    setLogTemplateId(null)
+    setActivePage('history')
+  }
+
+  // Step 1: Template picker
   if (step === 1) {
     return (
       <div className="flex flex-col h-full">
@@ -162,6 +178,23 @@ export function LogWorkout() {
     )
   }
 
+  // Step 3: Summary
+  if (step === 3 && summaryData) {
+    return (
+      <div className="flex flex-col h-full">
+        <PageHeader title={selectedTemplate?.name ?? 'Summary'} />
+        <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
+          <WorkoutSummary
+            session={summaryData.session}
+            previousSession={summaryData.previousSession}
+            onDone={handleSummaryDone}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Step 2: Logging form
   if (!selectedTemplate) return null
 
   return (
