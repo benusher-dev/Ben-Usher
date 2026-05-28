@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useApp } from '../store/AppContext'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
@@ -22,6 +22,7 @@ function buildLogExercises(template) {
     exerciseId: ex.id,
     name: ex.name,
     restSeconds: ex.restSeconds ?? 90,
+    supersetId: ex.supersetId ?? null,
     sets: Array.from({ length: Math.max(1, ex.sets || 1) }, () => ({
       reps: ex.reps ?? '',
       weight: ex.weight ?? '',
@@ -77,9 +78,9 @@ function SetRow({ set, setIndex, onChange }) {
   )
 }
 
-function RestTimerRow({ exIndex, restSeconds, onChangeRest, timer, onStart, onStop }) {
-  const isActive = timer?.exIndex === exIndex && !timer.done
-  const isDone  = timer?.exIndex === exIndex &&  timer.done
+function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onStop }) {
+  const isActive = timer?.timerId === timerId && !timer.done
+  const isDone  = timer?.timerId === timerId &&  timer.done
 
   if (isActive) {
     const progress = timer.remaining / timer.total
@@ -142,7 +143,7 @@ function RestTimerRow({ exIndex, restSeconds, onChangeRest, timer, onStart, onSt
         {REST_PRESETS.map(p => (
           <button
             key={p.seconds}
-            onClick={() => onChangeRest(exIndex, p.seconds)}
+            onClick={() => onChangeRest(timerId, p.seconds)}
             className={`flex-shrink-0 px-2 py-1 rounded-lg text-xs font-semibold transition-colors ${
               restSeconds === p.seconds
                 ? 'bg-indigo-100 text-indigo-700'
@@ -154,7 +155,7 @@ function RestTimerRow({ exIndex, restSeconds, onChangeRest, timer, onStart, onSt
         ))}
       </div>
       <button
-        onClick={() => onStart(exIndex, restSeconds)}
+        onClick={() => onStart(timerId, restSeconds)}
         className="flex-shrink-0 px-3 py-1.5 text-xs font-semibold text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
       >
         Start
@@ -171,8 +172,27 @@ export function LogWorkout() {
   const [notes, setNotes] = useState('')
   const [summaryData, setSummaryData] = useState(null)
 
+  // Group flat logExercises into display groups (mirrors TemplateForm logic)
+  const exerciseGroups = useMemo(() => {
+    const groups = []
+    const ssMap = {}
+    logExercises.forEach((ex, i) => {
+      if (!ex.supersetId) {
+        groups.push({ type: 'single', items: [{ ex, i }] })
+      } else {
+        if (!ssMap[ex.supersetId]) {
+          const g = { type: 'superset', supersetId: ex.supersetId, items: [] }
+          ssMap[ex.supersetId] = g
+          groups.push(g)
+        }
+        ssMap[ex.supersetId].items.push({ ex, i })
+      }
+    })
+    return groups
+  }, [logExercises])
+
   // Rest timer state
-  const [timer, setTimer] = useState(null) // { exIndex, remaining, total, done }
+  const [timer, setTimer] = useState(null) // { timerId, remaining, total, done }
   const timerRef = useRef(null)
 
   const startedAtRef = useRef(null)
@@ -202,10 +222,10 @@ export function LogWorkout() {
     beginWorkout(template)
   }
 
-  // Timer controls
-  function startTimer(exIndex, seconds) {
+  // Timer controls — timerId is either `ex_${logExercise.id}` or `ss_${supersetId}`
+  function startTimer(timerId, seconds) {
     clearInterval(timerRef.current)
-    setTimer({ exIndex, remaining: seconds, total: seconds, done: false })
+    setTimer({ timerId, remaining: seconds, total: seconds, done: false })
     timerRef.current = setInterval(() => {
       setTimer(prev => {
         if (!prev) return null
@@ -224,10 +244,16 @@ export function LogWorkout() {
     setTimer(null)
   }
 
-  function updateRestSeconds(exIndex, seconds) {
-    setLogExercises(prev =>
-      prev.map((ex, i) => i === exIndex ? { ...ex, restSeconds: seconds } : ex)
-    )
+  // For single exercises timerId = `ex_${ex.id}`, for supersets timerId = `ss_${supersetId}`
+  function updateRestSeconds(timerId, seconds) {
+    setLogExercises(prev => {
+      if (timerId.startsWith('ss_')) {
+        const ssId = timerId.slice(3)
+        return prev.map(ex => ex.supersetId === ssId ? { ...ex, restSeconds: seconds } : ex)
+      }
+      const exId = timerId.slice(3)
+      return prev.map(ex => ex.id === exId ? { ...ex, restSeconds: seconds } : ex)
+    })
   }
 
   function updateSet(exIndex, setIndex, updatedSet) {
@@ -366,53 +392,92 @@ export function LogWorkout() {
       />
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
         <div className="flex flex-col gap-4 pb-6">
-          {logExercises.map((ex, exIdx) => (
-            <div key={ex.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-              <p className="font-semibold text-gray-900 mb-3">{ex.name}</p>
-              <div className="grid grid-cols-3 gap-2 mb-1">
-                <span className="text-xs text-gray-400 font-medium text-center">Set</span>
-                <span className="text-xs text-gray-400 font-medium text-center">Reps</span>
-                <span className="text-xs text-gray-400 font-medium text-center">Weight (kg)</span>
-              </div>
-              {ex.sets.map((set, setIdx) => (
-                <div key={setIdx} className="flex items-center gap-1">
-                  <div className="flex-1">
-                    <SetRow
-                      set={set}
-                      setIndex={setIdx}
-                      onChange={updated => updateSet(exIdx, setIdx, updated)}
-                    />
+          {exerciseGroups.map((group, gi) => {
+            if (group.type === 'single') {
+              const { ex, i: exIdx } = group.items[0]
+              const timerId = `ex_${ex.id}`
+              return (
+                <div key={ex.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+                  <p className="font-semibold text-gray-900 mb-3">{ex.name}</p>
+                  <div className="grid grid-cols-3 gap-2 mb-1">
+                    <span className="text-xs text-gray-400 font-medium text-center">Set</span>
+                    <span className="text-xs text-gray-400 font-medium text-center">Reps</span>
+                    <span className="text-xs text-gray-400 font-medium text-center">Weight (kg)</span>
                   </div>
-                  {ex.sets.length > 1 && (
-                    <button
-                      onClick={() => removeSet(exIdx, setIdx)}
-                      className="p-1 text-gray-300 hover:text-red-400 flex-shrink-0"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  )}
+                  {ex.sets.map((set, setIdx) => (
+                    <div key={setIdx} className="flex items-center gap-1">
+                      <div className="flex-1">
+                        <SetRow set={set} setIndex={setIdx} onChange={updated => updateSet(exIdx, setIdx, updated)} />
+                      </div>
+                      {ex.sets.length > 1 && (
+                        <button onClick={() => removeSet(exIdx, setIdx)} className="p-1 text-gray-300 hover:text-red-400 flex-shrink-0">
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  <button onClick={() => addSet(exIdx)} className="mt-2 w-full py-1.5 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors">
+                    + Add Set
+                  </button>
+                  <RestTimerRow timerId={timerId} restSeconds={ex.restSeconds} onChangeRest={updateRestSeconds} timer={timer} onStart={startTimer} onStop={stopTimer} />
                 </div>
-              ))}
-              <button
-                onClick={() => addSet(exIdx)}
-                className="mt-2 w-full py-1.5 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors"
-              >
-                + Add Set
-              </button>
+              )
+            }
 
-              {/* Rest timer */}
-              <RestTimerRow
-                exIndex={exIdx}
-                restSeconds={ex.restSeconds}
-                onChangeRest={updateRestSeconds}
-                timer={timer}
-                onStart={startTimer}
-                onStop={stopTimer}
-              />
-            </div>
-          ))}
+            // Superset group
+            const ssTimerId = `ss_${group.supersetId}`
+            const ssRestSeconds = group.items[0]?.ex.restSeconds ?? 90
+            return (
+              <div key={group.supersetId} className="border-l-4 border-indigo-400 rounded-r-2xl bg-white shadow-sm overflow-hidden">
+                <div className="flex items-center gap-2 px-4 pt-3 pb-2 bg-indigo-50/60">
+                  <div className="flex gap-0.5 items-center">
+                    <div className="h-3.5 w-1 bg-indigo-500 rounded-full" />
+                    <div className="h-3.5 w-1 bg-indigo-500 rounded-full" />
+                  </div>
+                  <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Superset</span>
+                  <span className="text-indigo-300 text-xs">·</span>
+                  <span className="text-xs text-indigo-400">{group.items.length} exercises</span>
+                </div>
+
+                <div className="flex flex-col divide-y divide-gray-100">
+                  {group.items.map(({ ex, i: exIdx }) => (
+                    <div key={ex.id} className="px-4 py-3">
+                      <p className="font-semibold text-gray-900 mb-3">{ex.name}</p>
+                      <div className="grid grid-cols-3 gap-2 mb-1">
+                        <span className="text-xs text-gray-400 font-medium text-center">Set</span>
+                        <span className="text-xs text-gray-400 font-medium text-center">Reps</span>
+                        <span className="text-xs text-gray-400 font-medium text-center">Weight (kg)</span>
+                      </div>
+                      {ex.sets.map((set, setIdx) => (
+                        <div key={setIdx} className="flex items-center gap-1">
+                          <div className="flex-1">
+                            <SetRow set={set} setIndex={setIdx} onChange={updated => updateSet(exIdx, setIdx, updated)} />
+                          </div>
+                          {ex.sets.length > 1 && (
+                            <button onClick={() => removeSet(exIdx, setIdx)} className="p-1 text-gray-300 hover:text-red-400 flex-shrink-0">
+                              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button onClick={() => addSet(exIdx)} className="mt-2 w-full py-1.5 border border-dashed border-gray-200 rounded-lg text-xs text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors">
+                        + Add Set
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Shared rest timer for the whole superset */}
+                <div className="px-4 pb-3">
+                  <RestTimerRow timerId={ssTimerId} restSeconds={ssRestSeconds} onChangeRest={updateRestSeconds} timer={timer} onStart={startTimer} onStop={stopTimer} />
+                </div>
+              </div>
+            )
+          })}
 
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <label className="text-sm font-medium text-gray-700 block mb-2">Notes (optional)</label>
