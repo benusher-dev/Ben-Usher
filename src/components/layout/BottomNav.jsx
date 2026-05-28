@@ -56,7 +56,7 @@ export function BottomNav() {
   const { activePage, setActivePage } = useApp()
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-700 shadow-lg z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex items-stretch max-w-lg mx-auto">
         {NAV_ITEMS.map(item => (
           <button
@@ -64,8 +64,8 @@ export function BottomNav() {
             onClick={() => setActivePage(item.id)}
             className={`flex-1 flex flex-col items-center gap-0.5 py-2 px-1 transition-colors ${
               activePage === item.id
-                ? 'text-indigo-600'
-                : 'text-gray-400 hover:text-gray-600'
+                ? 'text-indigo-600 dark:text-indigo-400'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
             {item.icon}

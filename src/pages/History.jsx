@@ -37,28 +37,17 @@ export function History() {
           <div className="flex flex-col gap-4">
             <TrainingCalendar sessions={sessions} />
             <div className="flex flex-col gap-3">
-              {sorted.map(s => (
-                <SessionCard key={s.id} session={s} onClick={() => setSelected(s)} />
-              ))}
+              {sorted.map(s => <SessionCard key={s.id} session={s} onClick={() => setSelected(s)} />)}
             </div>
           </div>
         )}
       </div>
 
-      <Modal
-        open={!!selected && !confirmDelete}
-        onClose={() => setSelected(null)}
-        title={selected?.templateName}
-      >
+      <Modal open={!!selected && !confirmDelete} onClose={() => setSelected(null)} title={selected?.templateName}>
         {selected && (
           <div className="flex flex-col gap-4">
             <SessionDetail session={selected} />
-            <Button
-              variant="danger"
-              size="sm"
-              className="self-start"
-              onClick={() => setConfirmDelete(selected)}
-            >
+            <Button variant="danger" size="sm" className="self-start" onClick={() => setConfirmDelete(selected)}>
               Delete Session
             </Button>
           </div>
@@ -68,8 +57,8 @@ export function History() {
       <Modal open={!!confirmDelete} onClose={() => { setConfirmDelete(null); setSelected(null) }} title="Delete Session">
         {confirmDelete && (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-gray-600">
-              Delete this session from <strong>{confirmDelete.templateName}</strong>? This cannot be undone.
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Delete this session from <strong className="dark:text-white">{confirmDelete.templateName}</strong>? This cannot be undone.
             </p>
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" onClick={() => { setConfirmDelete(null); setSelected(null) }}>Cancel</Button>

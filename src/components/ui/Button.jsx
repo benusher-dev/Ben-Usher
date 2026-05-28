@@ -1,8 +1,8 @@
 const variants = {
   primary: 'bg-indigo-600 text-white hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-indigo-300',
-  secondary: 'bg-white text-indigo-600 border border-indigo-300 hover:bg-indigo-50 active:bg-indigo-100 disabled:opacity-50',
+  secondary: 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-gray-600 active:bg-indigo-100 disabled:opacity-50',
   danger: 'bg-red-600 text-white hover:bg-red-700 active:bg-red-800 disabled:opacity-50',
-  ghost: 'text-gray-600 hover:bg-gray-100 active:bg-gray-200 disabled:opacity-50',
+  ghost: 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 disabled:opacity-50',
 }
 
 const sizes = {
@@ -11,14 +11,7 @@ const sizes = {
   lg: 'px-6 py-3 text-base',
 }
 
-export function Button({
-  children,
-  variant = 'primary',
-  size = 'md',
-  className = '',
-  loading = false,
-  ...props
-}) {
+export function Button({ children, variant = 'primary', size = 'md', className = '', loading = false, ...props }) {
   return (
     <button
       className={`inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${variants[variant]} ${sizes[size]} ${className}`}

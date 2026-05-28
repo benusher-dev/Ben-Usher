@@ -109,14 +109,14 @@ export function TemplateForm({ initial, onSave, onCancel }) {
       <div className="flex flex-col gap-4">
         {/* Workout name */}
         <div>
-          <label className="text-sm font-medium text-gray-700 block mb-1">Workout Name</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1">Workout Name</label>
           <input
             type="text"
             placeholder="e.g. Push Day"
             value={name}
             onChange={e => { setName(e.target.value); setErrors(p => ({ ...p, name: undefined })) }}
-            className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-              errors.name ? 'border-red-400 bg-red-50' : 'border-gray-200'
+            className={`w-full rounded-xl border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 ${
+              errors.name ? 'border-red-400 bg-red-50' : 'border-gray-200 dark:border-gray-600'
             }`}
           />
           {errors.name && <p className="text-xs text-red-600 mt-1">{errors.name}</p>}
@@ -124,12 +124,12 @@ export function TemplateForm({ initial, onSave, onCancel }) {
 
         {/* Exercise list */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Exercises</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Exercises</p>
 
           {exercises.length === 0 && (
-            <div className="py-8 text-center border-2 border-dashed border-gray-200 rounded-2xl mb-3">
+            <div className="py-8 text-center border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl mb-3">
               <p className="text-sm text-gray-400">No exercises yet</p>
-              <p className="text-xs text-gray-300 mt-0.5">Browse the library, add custom, or create a superset</p>
+              <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">Browse the library, add custom, or create a superset</p>
             </div>
           )}
 
@@ -148,7 +148,7 @@ export function TemplateForm({ initial, onSave, onCancel }) {
 
                 // Superset group
                 return (
-                  <div key={group.supersetId} className="border-l-4 border-indigo-400 rounded-r-2xl bg-indigo-50/50 pl-3 pr-3 pt-3 pb-3">
+                  <div key={group.supersetId} className="border-l-4 border-indigo-400 rounded-r-2xl bg-indigo-50/50 dark:bg-indigo-900/20 pl-3 pr-3 pt-3 pb-3">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="flex gap-0.5 items-center">
                         <div className="h-3.5 w-1 bg-indigo-500 rounded-full" />

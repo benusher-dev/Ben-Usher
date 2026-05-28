@@ -51,7 +51,7 @@ function ExerciseTab({ sessions, setActivePage }) {
         <select
           value={selectedExercise}
           onChange={e => setSelectedExercise(e.target.value)}
-          className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-700 dark:text-white"
         >
           <option value="">Choose an exercise…</option>
           {exerciseNames.map(name => <option key={name} value={name}>{name}</option>)}
@@ -64,7 +64,7 @@ function ExerciseTab({ sessions, setActivePage }) {
             <button
               key={m.id}
               onClick={() => setMetric(m.id)}
-              className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-colors ${metric === m.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-colors ${metric === m.id ? 'bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'}`}
             >
               {m.label.split(' (')[0]}
             </button>
@@ -72,8 +72,8 @@ function ExerciseTab({ sessions, setActivePage }) {
         </div>
       </div>
       {selectedExercise ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-900 mb-3">{selectedExercise} — {selectedMetric.label}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">{selectedExercise} — {selectedMetric.label}</p>
           <ProgressChart data={chartData} metric={selectedMetric.label} />
           {chartData.length > 0 && (
             <div className="mt-4">
@@ -140,26 +140,26 @@ function RecordsTab({ sessions }) {
   return (
     <div className="flex flex-col gap-3">
       {records.map(r => (
-        <div key={r.name} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div key={r.name} className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-base">🏆</span>
-            <p className="text-sm font-semibold text-gray-900">{r.name}</p>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">{r.name}</p>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {r.maxWeight > 0 && (
               <div className="text-center">
-                <p className="text-lg font-bold text-indigo-600">{r.maxWeight}<span className="text-xs font-normal text-gray-400">kg</span></p>
-                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Max Weight</p>
+                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{r.maxWeight}<span className="text-xs font-normal text-gray-400">kg</span></p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Max Weight</p>
               </div>
             )}
             <div className="text-center">
-              <p className="text-lg font-bold text-indigo-600">{r.maxReps}</p>
-              <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Max Reps</p>
+              <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{r.maxReps}</p>
+              <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Max Reps</p>
             </div>
             {r.maxVolume > 0 && (
               <div className="text-center">
-                <p className="text-lg font-bold text-indigo-600">{r.maxVolume.toLocaleString()}<span className="text-xs font-normal text-gray-400">kg</span></p>
-                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-wide">Best Set Vol</p>
+                <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">{r.maxVolume.toLocaleString()}<span className="text-xs font-normal text-gray-400">kg</span></p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Best Set Vol</p>
               </div>
             )}
           </div>
@@ -207,8 +207,8 @@ function BodyWeightTab() {
   return (
     <div className="flex flex-col gap-4">
       {/* Log today */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-        <p className="text-sm font-semibold text-gray-900 mb-3">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
           {todayEntry ? 'Update Today\'s Weight' : 'Log Today\'s Weight'}
         </p>
         <div className="flex gap-2">
@@ -221,7 +221,7 @@ function BodyWeightTab() {
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSave()}
-              className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
           <div className="flex rounded-xl border border-gray-200 overflow-hidden text-xs font-semibold">
@@ -239,7 +239,7 @@ function BodyWeightTab() {
 
       {/* Chart */}
       {chartData.length > 1 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm font-semibold text-gray-900">Weight Over Time</p>
             <span className="text-xs text-gray-400">{displayUnit}</span>
@@ -279,12 +279,12 @@ function BodyWeightTab() {
 
       {/* Recent entries */}
       {entries.length > 0 && (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-          <p className="text-sm font-semibold text-gray-900 mb-3">Recent Entries</p>
-          <div className="flex flex-col divide-y divide-gray-50">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Recent Entries</p>
+          <div className="flex flex-col divide-y divide-gray-50 dark:divide-gray-700">
             {[...entries].reverse().slice(0, 20).map(e => (
               <div key={e.id} className="flex items-center justify-between py-2">
-                <span className="text-xs text-gray-500">{formatDate(e.date)}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(e.date)}</span>
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-gray-900">
                     {displayWeight(e.weight)} <span className="text-xs font-normal text-gray-400">{displayUnit}</span>
@@ -342,12 +342,12 @@ export function Progress() {
       <PageHeader title="Progress" />
       <div className="flex-1 overflow-y-auto px-4 py-4 max-w-lg mx-auto w-full">
         {/* Tab bar */}
-        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl mb-4">
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-700 p-1 rounded-xl mb-4">
           {TABS.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors ${tab === t.id ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
             >
               {t.label}
             </button>

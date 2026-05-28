@@ -1,0 +1,14 @@
+{
+  "name": "GymTracker",
+  "short_name": "GymTracker",
+  "description": "Track and create your gym workouts",
+  "start_url": "/Ben-Usher/",
+  "display": "standalone",
+  "background_color": "#f9fafb",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/Ben-Usher/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/Ben-Usher/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
