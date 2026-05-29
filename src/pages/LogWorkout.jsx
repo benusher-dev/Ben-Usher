@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useApp } from '../store/AppContext'
+import { useWeekProgress } from '../hooks/useWeekProgress'
 import { PageHeader } from '../components/layout/PageHeader'
 import { Button } from '../components/ui/Button'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -23,10 +24,11 @@ function getExerciseType(ex) {
 }
 
 const TYPE_META = {
-  weight: { label: null },
-  bw:     { label: 'Bodyweight',  cls: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' },
-  hold:   { label: '⏱ Hold',      cls: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30' },
-  cardio: { label: '🏃 Cardio',   cls: 'text-sky-500 bg-sky-50 dark:bg-sky-900/30' },
+  weight:    { label: null },
+  bw:        { label: 'Bodyweight',  cls: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' },
+  hold:      { label: '⏱ Hold',      cls: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30' },
+  cardio:    { label: '🏃 Cardio',   cls: 'text-sky-500 bg-sky-50 dark:bg-sky-900/30' },
+  checklist: { label: null },
 }
 
 function buildLogExercises(template) {
@@ -225,14 +227,12 @@ function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onSt
 
   if (isDone) {
     return (
-      <div className="mt-3 flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-xl px-3 py-2">
+      <div onClick={onStop} className="mt-3 flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 rounded-xl px-3 py-2 cursor-pointer">
         <div className="flex items-center gap-2">
           <svg className="h-4 w-4 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
           <span className="text-emerald-700 dark:text-emerald-400 font-semibold text-sm">Rest complete — go!</span>
         </div>
-        <button onClick={onStop} className="text-xs text-emerald-600 font-semibold hover:text-emerald-800 px-2 py-1 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800 transition-colors">
-          Dismiss
-        </button>
+        <span className="text-xs text-emerald-600 font-semibold px-2 py-1">Dismiss</span>
       </div>
     )
   }
@@ -269,6 +269,39 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
   const timerId = `ex_${ex.id}`
   const exType = getExerciseType(ex)
   const badge  = TYPE_META[exType]
+
+  if (exType === 'checklist') {
+    const isDone = ex.sets[0]?.done ?? false
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-amber-600 bg-amber-50 dark:bg-amber-900/30">Warm-up</span>
+          <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
+          </button>
+        </div>
+        {ex.notes && (
+          <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl text-xs text-gray-500 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+            {ex.notes}
+          </div>
+        )}
+        <button
+          onClick={() => updateSet(exIdx, 0, { ...ex.sets[0], done: !isDone })}
+          className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
+            isDone
+              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
+              : 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40'
+          }`}
+        >
+          {isDone ? '✓ Warm-Up Done' : 'Mark Warm-Up Complete'}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
       <div className="mb-3">
@@ -308,18 +341,20 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
 }
 
 const EX_TYPES = [
-  { value: 'weight', label: 'Weight',     sub: 'reps + kg',   icon: '🏋️' },
-  { value: 'bw',     label: 'Bodyweight', sub: 'reps + opt kg', icon: '🙆' },
-  { value: 'hold',   label: 'Hold / ISO', sub: 'secs + opt kg', icon: '⏱️' },
-  { value: 'cardio', label: 'Cardio',     sub: 'dur + dist',  icon: '🏃' },
+  { value: 'weight',    label: 'Weight',     sub: 'reps + kg',       icon: '🏋️' },
+  { value: 'bw',        label: 'Bodyweight', sub: 'reps + opt kg',   icon: '🙆' },
+  { value: 'hold',      label: 'Hold / ISO', sub: 'secs + opt kg',   icon: '⏱️' },
+  { value: 'cardio',    label: 'Cardio',     sub: 'dur + dist',      icon: '🏃' },
+  { value: 'checklist', label: 'Checklist',  sub: 'tap to complete',  icon: '✅', span: true },
 ]
 
 // ── Exercise edit sheet ───────────────────────────────────────────────────────
 function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
-  const [name, setName]         = useState(ex.name)
-  const [notes, setNotes]       = useState(ex.notes ?? '')
-  const [exType, setExType]     = useState(getExerciseType(ex))
-  const [supersetId, setSsId]   = useState(ex.supersetId ?? null)
+  const [name, setName]           = useState(ex.name)
+  const [notes, setNotes]         = useState(ex.notes ?? '')
+  const [exType, setExType]       = useState(getExerciseType(ex))
+  const [supersetId, setSsId]     = useState(ex.supersetId ?? null)
+  const [noteLocked, setNoteLocked] = useState(true)
 
   // Unique supersets in this workout (exclude current exercise from member list)
   const supersets = useMemo(() => {
@@ -338,7 +373,7 @@ function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
       notes:        notes.trim() || null,
       exerciseType: exType,
       supersetId,
-    })
+    }, noteLocked)
     onClose()
   }
 
@@ -377,7 +412,7 @@ function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
                 <button
                   key={t.value}
                   onClick={() => setExType(t.value)}
-                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${t.span ? 'col-span-2' : ''} ${
                     exType === t.value
                       ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/30'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
@@ -431,7 +466,33 @@ function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
 
           {/* Notes */}
           <div>
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Notes</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</label>
+              <button
+                type="button"
+                onClick={() => setNoteLocked(v => !v)}
+                title={noteLocked ? 'Saves to template — tap to make session-only' : 'Session only — tap to save to template'}
+                className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              >
+                {noteLocked ? (
+                  <>
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                    <span>Saves to template</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                    </svg>
+                    <span className="text-amber-500 dark:text-amber-400">Session only</span>
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -456,7 +517,7 @@ function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
 }
 
 // ── Settings sheet ────────────────────────────────────────────────────────────
-function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, onClose }) {
+function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, weekNum, onSetWeek, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
@@ -471,6 +532,25 @@ function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, onClo
         <div className="px-5 pt-2 pb-4">
           <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">Workout Settings</h3>
           <div className="flex flex-col gap-5">
+            {weekNum != null && (
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">Programme week</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Which week of the 8-week block you're on</p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => onSetWeek(Math.max(1, weekNum - 1))}
+                    className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-base hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
+                  >−</button>
+                  <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">{weekNum}</span>
+                  <button
+                    onClick={() => onSetWeek(weekNum + 1)}
+                    className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-base hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
+                  >+</button>
+                </div>
+              </div>
+            )}
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">Auto-start rest timer</p>
@@ -504,7 +584,8 @@ function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, onClo
 
 // ── Main component ─────────────────────────────────────────────────────────────
 export function LogWorkout() {
-  const { templates, sessions, logTemplateId, setLogTemplateId, addSession, setActivePage } = useApp()
+  const { templates, sessions, logTemplateId, setLogTemplateId, addSession, setActivePage, updateTemplate } = useApp()
+  const { getWeek, setWeek, incrementWeek } = useWeekProgress()
   const [step, setStep] = useState(1)
   const [selectedTemplate, setSelectedTemplate] = useState(null)
   const [logExercises, setLogExercises] = useState([])
@@ -538,7 +619,7 @@ export function LogWorkout() {
         ssMap[ex.supersetId].items.push({ ex, i })
       }
     })
-    return groups
+    return groups.map(g => g.type === 'superset' && g.items.length === 1 ? { type: 'single', items: g.items } : g)
   }, [logExercises])
 
   useEffect(() => {
@@ -611,8 +692,18 @@ export function LogWorkout() {
     setLogExercises(prev => prev.map((ex, i) => i === exIndex && ex.sets.length > 1 ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) } : ex))
   }
 
-  function updateExerciseInfo(exIndex, updates) {
+  function updateExerciseInfo(exIndex, updates, persistNoteToTemplate = false) {
     setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, ...updates } : ex))
+    if (persistNoteToTemplate && selectedTemplate && 'notes' in updates) {
+      const updatedExercises = selectedTemplate.exercises.map((ex, i) =>
+        i === exIndex ? { ...ex, notes: updates.notes } : ex
+      )
+      updateTemplate(selectedTemplate.id, selectedTemplate.name, updatedExercises)
+      setSelectedTemplate(prev => prev ? {
+        ...prev,
+        exercises: prev.exercises.map((ex, i) => i === exIndex ? { ...ex, notes: updates.notes } : ex)
+      } : prev)
+    }
   }
 
   function handleAddExercise(exercise) {
@@ -653,6 +744,7 @@ export function LogWorkout() {
         })),
       })),
     }
+    incrementWeek(selectedTemplate.id)
     const newSession = addSession(sessionPayload, startedAtRef.current)
     startedAtRef.current = null
     setSummaryData({ session: newSession, previousSession: prevSession, historicalSessions })
@@ -744,6 +836,9 @@ export function LogWorkout() {
           accent
           action={
             <div className="flex items-center gap-1.5">
+              <span className="text-xs font-semibold text-white/80 bg-white/20 px-2 py-1 rounded-lg">
+                Wk {getWeek(selectedTemplate.id)}
+              </span>
               <span className="text-xs font-mono font-semibold text-white/90 tabular-nums bg-white/20 px-2 py-1 rounded-lg">
                 {formatElapsed(elapsed)}
               </span>
@@ -919,6 +1014,8 @@ export function LogWorkout() {
           autoRest={autoRest} showRPE={showRPE}
           onToggleAutoRest={() => setAutoRest(v => !v)}
           onToggleRPE={() => setShowRPE(v => !v)}
+          weekNum={getWeek(selectedTemplate?.id)}
+          onSetWeek={w => setWeek(selectedTemplate?.id, w)}
           onClose={() => setShowSettings(false)}
         />
       )}

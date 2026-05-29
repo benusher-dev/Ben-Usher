@@ -1,8 +1,8 @@
 // OFF SZN programme — Ben Usher 8-week block
 // Seeded once via useTemplates.js; never re-seeded after gwt_offszn_seeded is set.
 
-function ex(id, name, sets, reps, weight, category, supersetId, restSeconds, notes, isCardio = false) {
-  return { id, name, sets, reps, weight, isCardio, supersetId, category, restSeconds, notes: notes ?? null }
+function ex(id, name, sets, reps, weight, category, supersetId, restSeconds, notes, isCardio = false, exerciseType = 'weight') {
+  return { id, name, sets, reps, weight, isCardio, supersetId, category, restSeconds, notes: notes ?? null, exerciseType }
 }
 
 export const SEED_TEMPLATES = [
@@ -14,7 +14,7 @@ export const SEED_TEMPLATES = [
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
       ex('l1-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
-        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side'),
+        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
 
       // Block A — circuit, 4 rounds no rest
       ex('l1-a1', 'Pogos',             4, 10, null, 'legs',  'l1-A', 60, 'Start 10 reps — add 2 reps/week. Circuit A: no rest between exercises or rounds (4 rounds).'),
@@ -43,7 +43,7 @@ export const SEED_TEMPLATES = [
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
       ex('u1-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
-        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5'),
+        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
 
       // Block A — circuit, 3 rounds no rest
       ex('u1-a1', 'Supine Med Ball Throws',  3, 3, null, 'other', 'u1-A', 60, '4kg med ball. Circuit A: no rest between exercises or rounds (3 rounds).'),
@@ -73,7 +73,7 @@ export const SEED_TEMPLATES = [
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
       ex('sp-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
-        '2 min jog · Squats ×10 · Walking lunges ×10 · Single leg RDL ×5/side · Side lunge ×5/side · Leg swings ×5/side (front/back + side) · A-march 10m · Single A-switches ×20 · Lateral hop and stick ×10'),
+        '2 min jog · Squats ×10 · Walking lunges ×10 · Single leg RDL ×5/side · Side lunge ×5/side · Leg swings ×5/side (front/back + side) · A-march 10m · Single A-switches ×20 · Lateral hop and stick ×10', false, 'checklist'),
 
       // Block A — sprint prep circuit
       ex('sp-a1', 'Wall Drive',           3, 5,  null, 'other', 'sp-A', 90, '5/leg — add 1 rep every 2 weeks. Sprint prep circuit.'),
@@ -98,7 +98,7 @@ export const SEED_TEMPLATES = [
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
       ex('l2-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
-        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side'),
+        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
 
       // Block A — circuit, 4 rounds no rest
       ex('l2-a1', 'Lateral Wall ISOs',       4, 10, null, 'legs', 'l2-A', 60, '10s each side. Circuit A: no rest between exercises or rounds (4 rounds).'),
@@ -126,7 +126,7 @@ export const SEED_TEMPLATES = [
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
       ex('u2-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
-        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5'),
+        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
 
       // Block A — circuit
       ex('u2-a1', 'Plyometric Push-Ups',              3, 5, null, 'chest', 'u2-A', 60, 'Start 5 reps — add 1 rep every 2 weeks.'),
