@@ -25,7 +25,7 @@ function getExerciseType(ex) {
 }
 
 const TYPE_META = {
-  weight:    { label: null },
+  weight:    { label: 'Weights',     cls: 'text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30' },
   bw:        { label: 'Bodyweight',  cls: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' },
   hold:      { label: '⏱ Hold',      cls: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30' },
   cardio:    { label: '🏃 Cardio',   cls: 'text-sky-500 bg-sky-50 dark:bg-sky-900/30' },
