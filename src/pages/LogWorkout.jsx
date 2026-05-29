@@ -334,7 +334,8 @@ export function LogWorkout() {
   const [summaryData, setSummaryData] = useState(null)
   const [timer, setTimer] = useState(null)
   const [elapsed, setElapsed] = useState(0)
-  const [showPlateCalc, setShowPlateCalc] = useState(false)
+  const [showPlates, setShowPlates] = useState(false)
+  const [show1RM, setShow1RM] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAddExercise, setShowAddExercise] = useState(false)
   const [autoRest, setAutoRest] = useState(() => {
@@ -534,12 +535,33 @@ export function LogWorkout() {
                 {formatElapsed(elapsed)}
               </span>
               <button
-                onClick={() => setShowPlateCalc(true)}
+                onClick={() => setShowPlates(true)}
                 className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-                title="Plate / 1RM Calculator"
+                title="Plate Calculator"
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
+                  <rect x="4" y="2" width="16" height="20" rx="2" />
+                  <line x1="8" y1="7" x2="16" y2="7" />
+                  <line x1="8" y1="12" x2="8" y2="12" strokeLinecap="round" strokeWidth="3" />
+                  <line x1="12" y1="12" x2="12" y2="12" strokeLinecap="round" strokeWidth="3" />
+                  <line x1="16" y1="12" x2="16" y2="12" strokeLinecap="round" strokeWidth="3" />
+                  <line x1="8" y1="17" x2="8" y2="17" strokeLinecap="round" strokeWidth="3" />
+                  <line x1="12" y1="17" x2="12" y2="17" strokeLinecap="round" strokeWidth="3" />
+                  <line x1="16" y1="17" x2="16" y2="17" strokeLinecap="round" strokeWidth="3" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShow1RM(true)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+                title="1RM Estimator"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                  <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                  <path d="M4 22h16" />
+                  <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                  <path d="M18 2H6v7a6 6 0 0 0 12 0V2z" />
                 </svg>
               </button>
               <button
@@ -659,7 +681,8 @@ export function LogWorkout() {
         </div>
       </div>
 
-      {showPlateCalc && <PlateCalculator onClose={() => setShowPlateCalc(false)} />}
+      {showPlates && <PlateCalculator initialTab="plates" onClose={() => setShowPlates(false)} />}
+      {show1RM && <PlateCalculator initialTab="1rm" onClose={() => setShow1RM(false)} />}
       <ExercisePicker
         open={showAddExercise}
         onAdd={handleAddExercise}

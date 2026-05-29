@@ -38,8 +38,8 @@ function PlateDisc({ kg }) {
   )
 }
 
-export function PlateCalculator({ onClose }) {
-  const [activeTab, setActiveTab] = useState('plates')
+export function PlateCalculator({ onClose, initialTab = 'plates' }) {
+  const [activeTab, setActiveTab] = useState(initialTab)
 
   // Plates tab
   const [target, setTarget] = useState('')
