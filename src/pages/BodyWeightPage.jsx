@@ -44,7 +44,7 @@ function WeightChart({ entries }) {
   const xLabelIndices = new Set([0, entries.length - 1])
   for (let i = xStep; i < entries.length - 1; i += xStep) xLabelIndices.add(i)
 
-  const ap = active !== null ? pts[active] : null
+  const ap = active !== null && active < pts.length ? pts[active] : null
 
   return (
     <div className="relative">
@@ -138,7 +138,7 @@ export function BodyWeightPage() {
 
   function handleLog() {
     const w = parseFloat(input)
-    if (!w || w <= 0 || w > 500) return
+    if (isNaN(w) || w <= 0 || w > 500) return
     logWeight(w)
     setInput('')
   }

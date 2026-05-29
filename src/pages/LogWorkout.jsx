@@ -27,6 +27,7 @@ function buildLogExercises(template) {
     restSeconds: ex.restSeconds ?? 90,
     supersetId: ex.supersetId ?? null,
     sets: Array.from({ length: Math.max(1, ex.sets || 1) }, () => ({
+      id: generateId(),
       reps: ex.reps ?? '',
       weight: ex.weight ?? '',
       done: false,
@@ -255,7 +256,7 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
       <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
       {ex.sets.map((set, setIdx) => (
         <SetRow
-          key={setIdx}
+          key={set.id}
           set={set} setIndex={setIdx}
           prevSet={prevSets?.[setIdx]}
           isCardio={ex.isCardio} showRPE={showRPE}
@@ -424,7 +425,7 @@ export function LogWorkout() {
   }
 
   function addSet(exIndex) {
-    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, sets: [...ex.sets, { reps: '', weight: '', done: false, rpe: null }] } : ex))
+    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, sets: [...ex.sets, { id: generateId(), reps: '', weight: '', done: false, rpe: null }] } : ex))
   }
 
   function removeSet(exIndex, setIndex) {
@@ -440,6 +441,7 @@ export function LogWorkout() {
       restSeconds: 90,
       supersetId: null,
       sets: Array.from({ length: exercise.sets || 3 }, () => ({
+        id: generateId(),
         reps: exercise.reps ?? '',
         weight: exercise.weight ?? '',
         done: false,
@@ -656,7 +658,7 @@ export function LogWorkout() {
                         <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
                         {ex.sets.map((set, setIdx) => (
                           <SetRow
-                            key={setIdx}
+                            key={set.id}
                             set={set} setIndex={setIdx}
                             prevSet={prevLookup[ex.name]?.[setIdx]}
                             isCardio={ex.isCardio} showRPE={showRPE}

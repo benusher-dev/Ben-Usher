@@ -46,7 +46,7 @@ export function ExerciseRow({ exercise, index, onChange, onDelete }) {
             <input
               type="number" min="1" placeholder="30"
               value={exercise.reps || ''}
-              onChange={e => update('reps', Number(e.target.value))}
+              onChange={e => update('reps', e.target.value === '' ? '' : Number(e.target.value))}
               className={`w-full text-center ${inputCls}`}
             />
           </div>
@@ -76,7 +76,7 @@ export function ExerciseRow({ exercise, index, onChange, onDelete }) {
             <input
               type="number" min="1" max="999" placeholder="10"
               value={exercise.reps || ''}
-              onChange={e => update('reps', Number(e.target.value))}
+              onChange={e => update('reps', e.target.value === '' ? '' : Number(e.target.value))}
               className={`w-full text-center ${inputCls}`}
             />
           </div>
