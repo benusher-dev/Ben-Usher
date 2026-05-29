@@ -621,7 +621,19 @@ export function LogWorkout() {
         ssMap[ex.supersetId].items.push({ ex, i })
       }
     })
-    return groups.map(g => g.type === 'superset' && g.items.length === 1 ? { type: 'single', items: g.items } : g)
+    const fixed = groups.map(g => g.type === 'superset' && g.items.length === 1 ? { type: 'single', items: g.items } : g)
+    // Merge consecutive warmup singles into one warmup group
+    const merged = []; let wuBatch = []
+    for (const g of fixed) {
+      if (g.type === 'single' && g.items[0].ex.category === 'warmup') {
+        wuBatch.push(g.items[0])
+      } else {
+        if (wuBatch.length) { merged.push({ type: 'warmup', items: wuBatch }); wuBatch = [] }
+        merged.push(g)
+      }
+    }
+    if (wuBatch.length) merged.push({ type: 'warmup', items: wuBatch })
+    return merged
   }, [logExercises])
 
   useEffect(() => {
@@ -914,6 +926,60 @@ export function LogWorkout() {
                     updateRestSeconds={updateRestSeconds} startTimer={startTimer} stopTimer={stopTimer}
                     onEditExercise={setEditingExercise}
                   />
+                )
+              }
+
+              // Warmup group
+              if (group.type === 'warmup') {
+                return (
+                  <div key="warmup-group" className="flex flex-col gap-4">
+                    <div className="border-l-4 border-red-400 rounded-r-2xl bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
+                      <div className="flex items-center gap-2 px-4 pt-3 pb-2 bg-red-50/60 dark:bg-red-900/20">
+                        <div className="flex gap-0.5 items-center">
+                          <div className="h-3.5 w-1 bg-red-500 rounded-full" /><div className="h-3.5 w-1 bg-red-500 rounded-full" />
+                        </div>
+                        <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">Warm-up</span>
+                        <span className="text-red-300 text-xs">·</span>
+                        <span className="text-xs text-red-400">{group.items.length} exercises</span>
+                      </div>
+                      <div className="flex flex-col divide-y divide-red-50 dark:divide-gray-700">
+                        {group.items.map(({ ex, i: exIdx }) => {
+                          const wuType = getExerciseType(ex)
+                          return (
+                            <div key={ex.id} className="px-4 py-3">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <p className="font-semibold text-gray-900 dark:text-white flex-1 text-sm">{ex.name}</p>
+                                <button onClick={() => setEditingExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
+                                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                                  </svg>
+                                </button>
+                              </div>
+                              {ex.notes && <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">{ex.notes}</p>}
+                              <SetHeader exerciseType={wuType} showRPE={false} />
+                              {ex.sets.map((set, setIdx) => (
+                                <SetRow
+                                  key={set.id}
+                                  set={set} setIndex={setIdx}
+                                  prevSet={prevLookup[ex.name]?.[setIdx]}
+                                  exerciseType={wuType} showRPE={false}
+                                  canRemove={false}
+                                  onChange={updated => updateSet(exIdx, setIdx, updated)}
+                                  onToggleDone={done => updateSet(exIdx, setIdx, { ...set, done })}
+                                  onRemove={() => {}}
+                                />
+                              ))}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 px-1">
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">Main workout</span>
+                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+                    </div>
+                  </div>
                 )
               }
 
