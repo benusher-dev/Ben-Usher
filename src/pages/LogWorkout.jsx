@@ -38,6 +38,7 @@ function buildLogExercises(template) {
     exerciseId: ex.id,
     name: ex.name,
     notes: ex.notes ?? null,
+    category: ex.category ?? null,
     exerciseType: ex.exerciseType ?? (ex.isCardio ? 'cardio' : 'weight'),
     restSeconds: ex.restSeconds ?? 90,
     supersetId: ex.supersetId ?? null,

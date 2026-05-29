@@ -11,7 +11,7 @@ function Pages() {
   const { activePage } = useApp()
 
   return (
-    <main className="flex flex-col h-screen pb-[calc(4rem+env(safe-area-inset-bottom))]">
+    <main className="flex flex-col h-dvh pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="flex-1 overflow-hidden flex flex-col">
         {activePage === 'dashboard'   && <Dashboard />}
         {activePage === 'workouts'    && <Workouts />}
