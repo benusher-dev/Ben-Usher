@@ -166,7 +166,8 @@ function BodyWeightCard() {
 
       {/* Current weight + change */}
       {latest ? (
-        <div className="flex items-end gap-3 mb-3">
+        <div className="flex items-center gap-4 mb-3">
+          {/* Current */}
           <div>
             <p className="text-4xl font-bold text-gray-900 dark:text-white leading-none">
               {latest.weight}
@@ -176,15 +177,35 @@ function BodyWeightCard() {
               {new Date(latest.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
             </p>
           </div>
+
           {diff !== null && (
-            <div className={`flex items-center gap-0.5 mb-1.5 ${diff < 0 ? 'text-emerald-500' : diff > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
-              {diff < 0
-                ? <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="18 15 12 9 6 15" /></svg>
-                : diff > 0
-                ? <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
-                : null}
-              <span className="text-sm font-semibold">{diff === 0 ? 'No change' : `${Math.abs(diff)} kg`}</span>
-            </div>
+            <>
+              {/* Arrow + diff */}
+              <div className={`flex flex-col items-center gap-0.5 ${diff < 0 ? 'text-emerald-500' : diff > 0 ? 'text-rose-500' : 'text-gray-400'}`}>
+                {diff < 0 ? (
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="18 15 12 9 6 15" /></svg>
+                ) : diff > 0 ? (
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="6 9 12 15 18 9" /></svg>
+                ) : (
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12" /></svg>
+                )}
+                <span className="text-xs font-bold tabular-nums">
+                  {diff === 0 ? '—' : `${diff < 0 ? '' : '+'}${diff} kg`}
+                </span>
+              </div>
+
+              {/* Previous weight */}
+              <div className="border-l border-gray-100 dark:border-gray-700 pl-4">
+                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-0.5">Previous</p>
+                <p className="text-xl font-bold text-gray-400 dark:text-gray-500 leading-none">
+                  {prev.weight}
+                  <span className="text-sm font-medium ml-1">kg</span>
+                </p>
+                <p className="text-xs text-gray-300 dark:text-gray-600 mt-0.5">
+                  {new Date(prev.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                </p>
+              </div>
+            </>
           )}
         </div>
       ) : (
