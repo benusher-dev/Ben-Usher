@@ -106,7 +106,7 @@ function AssignSheet({ day, templates, current, onAssign, onClose }) {
 }
 
 // ── Body weight card ─────────────────────────────────────────────────────────
-function BodyWeightCard() {
+function BodyWeightCard({ onNavigate }) {
   const { entries, logWeight } = useBodyWeight()
   const [input, setInput] = useState('')
 
@@ -149,10 +149,11 @@ function BodyWeightCard() {
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
       {/* Header row */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
+        <button onClick={onNavigate} className="flex items-center gap-2 hover:opacity-70 transition-opacity">
           <span className="text-base">⚖️</span>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">Body Weight</p>
-        </div>
+          <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6" /></svg>
+        </button>
         {trend !== null && (
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
             trend < 0 ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400'
@@ -408,7 +409,7 @@ export function Dashboard() {
           )}
 
           {/* Body weight */}
-          <BodyWeightCard />
+          <BodyWeightCard onNavigate={() => setActivePage('bodyweight')} />
 
           {/* Recent sessions */}
           <div>

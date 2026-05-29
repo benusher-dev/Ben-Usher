@@ -5,6 +5,7 @@ import { Workouts } from './pages/Workouts'
 import { LogWorkout } from './pages/LogWorkout'
 import { History } from './pages/History'
 import { Progress } from './pages/Progress'
+import { BodyWeightPage } from './pages/BodyWeightPage'
 
 function Pages() {
   const { activePage } = useApp()
@@ -12,11 +13,12 @@ function Pages() {
   return (
     <main className="flex flex-col h-screen pb-[calc(4rem+env(safe-area-inset-bottom))]">
       <div className="flex-1 overflow-hidden flex flex-col">
-        {activePage === 'dashboard' && <Dashboard />}
-        {activePage === 'workouts' && <Workouts />}
-        {activePage === 'log' && <LogWorkout />}
-        {activePage === 'history' && <History />}
-        {activePage === 'progress' && <Progress />}
+        {activePage === 'dashboard'   && <Dashboard />}
+        {activePage === 'workouts'    && <Workouts />}
+        {activePage === 'log'         && <LogWorkout />}
+        {activePage === 'history'     && <History />}
+        {activePage === 'progress'    && <Progress />}
+        {activePage === 'bodyweight'  && <BodyWeightPage />}
       </div>
     </main>
   )
