@@ -91,6 +91,14 @@ export function ExerciseRow({ exercise, index, onChange, onDelete }) {
           </div>
         </div>
       )}
+      <textarea
+        rows={1}
+        placeholder="Notes (optional) — e.g. RPE target, progression, cues…"
+        value={exercise.notes ?? ''}
+        onChange={e => update('notes', e.target.value || null)}
+        className={`w-full resize-none ${inputCls} text-xs`}
+        style={{ minHeight: '2rem' }}
+      />
     </div>
   )
 }

@@ -23,6 +23,7 @@ function buildLogExercises(template) {
     id: generateId(),
     exerciseId: ex.id,
     name: ex.name,
+    notes: ex.notes ?? null,
     isCardio: ex.isCardio ?? false,
     restSeconds: ex.restSeconds ?? 90,
     supersetId: ex.supersetId ?? null,
@@ -249,9 +250,12 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
   const timerId = `ex_${ex.id}`
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
-        {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+      <div className="mb-3">
+        <div className="flex items-center gap-2">
+          <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
+          {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+        </div>
+        {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
       </div>
       <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
       {ex.sets.map((set, setIdx) => (
@@ -437,6 +441,7 @@ export function LogWorkout() {
       id: generateId(),
       exerciseId: generateId(),
       name: exercise.name,
+      notes: exercise.notes ?? null,
       isCardio: exercise.category === 'cardio',
       restSeconds: 90,
       supersetId: null,
@@ -651,9 +656,12 @@ export function LogWorkout() {
                   <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                     {group.items.map(({ ex, i: exIdx }) => (
                       <div key={ex.id} className="px-4 py-3">
-                        <div className="flex items-center gap-2 mb-3">
-                          <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
-                          {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+                        <div className="mb-3">
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
+                            {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+                          </div>
+                          {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
                         </div>
                         <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
                         {ex.sets.map((set, setIdx) => (
