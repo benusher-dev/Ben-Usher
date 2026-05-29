@@ -6,7 +6,7 @@ export function PageHeader({ title, action, accent = false }) {
   return (
     <header className={`sticky top-0 z-30 flex-shrink-0 ${
       accent
-        ? 'bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20'
+        ? 'bg-gradient-to-r from-sky-400 to-blue-500 shadow-lg shadow-sky-400/20'
         : 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700'
     }`}>
       <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
