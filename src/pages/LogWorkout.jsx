@@ -267,38 +267,42 @@ function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onSt
 
 // ── Exercise card (single) ────────────────────────────────────────────────────
 function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer, onEditExercise }) {
-  const timerId = `ex_${ex.id}`
-  const exType = getExerciseType(ex)
-  const badge  = TYPE_META[exType]
+  const timerId  = `ex_${ex.id}`
+  const exType   = getExerciseType(ex)
+  const badge    = TYPE_META[exType]
+  const isWarmup = ex.category === 'warmup'
 
-  if (exType === 'checklist') {
-    const isDone = ex.sets[0]?.done ?? false
-    const catLabel = CATEGORIES.find(c => c.id === ex.category)?.label ?? 'Warm-up'
-    const catColor = CATEGORY_COLOR[ex.category] ?? 'bg-red-100 text-red-700'
+  const pencilBtn = (
+    <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors flex-shrink-0" title="Edit exercise">
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+      </svg>
+    </button>
+  )
+
+  // Compact warm-up card — no rest timer, no add-set, tighter padding
+  if (isWarmup) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
-        <div className="mb-3">
-          <div className="flex items-center gap-2">
-            <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${catColor}`}>{catLabel}</span>
-            <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
-              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-              </svg>
-            </button>
-          </div>
-          {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-3">
+        <div className="flex items-center gap-2 mb-1.5">
+          <p className="font-semibold text-gray-900 dark:text-white flex-1 text-sm">{ex.name}</p>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700">Warm-up</span>
+          {pencilBtn}
         </div>
-        <button
-          onClick={() => updateSet(exIdx, 0, { ...ex.sets[0], done: !isDone })}
-          className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
-            isDone
-              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
-              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
-          }`}
-        >
-          {isDone ? '✓ Warm-Up Done' : 'Mark Warm-Up Complete'}
-        </button>
+        {ex.notes && <p className="text-[11px] text-gray-400 dark:text-gray-500 mb-2">{ex.notes}</p>}
+        <SetHeader exerciseType={exType} showRPE={false} />
+        {ex.sets.map((set, setIdx) => (
+          <SetRow
+            key={set.id}
+            set={set} setIndex={setIdx}
+            prevSet={prevSets?.[setIdx]}
+            exerciseType={exType} showRPE={false}
+            canRemove={false}
+            onChange={updated => updateSet(exIdx, setIdx, updated)}
+            onToggleDone={done => updateSet(exIdx, setIdx, { ...set, done })}
+            onRemove={() => {}}
+          />
+        ))}
       </div>
     )
   }
@@ -309,11 +313,7 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
         <div className="flex items-center gap-2">
           <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
           {badge.label && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>}
-          <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-            </svg>
-          </button>
+          {pencilBtn}
         </div>
         {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
       </div>

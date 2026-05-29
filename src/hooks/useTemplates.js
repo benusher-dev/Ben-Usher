@@ -1,6 +1,6 @@
 import { useLocalStorage } from './useLocalStorage'
 import { generateId } from '../utils/dateHelpers'
-import { SEED_TEMPLATES } from '../data/seedTemplates'
+import { SEED_TEMPLATES, SEED_WARMUPS } from '../data/seedTemplates'
 
 // One-time seed: runs before React renders, safe in this client-only app.
 ;(function seedOffSzn() {
@@ -14,24 +14,25 @@ import { SEED_TEMPLATES } from '../data/seedTemplates'
   } catch {}
 })()
 
-// Backfill warm-up exercises to exerciseType:'checklist' + category:'warmup'.
-const WARMUP_IDS = new Set(['l1-wu', 'u1-wu', 'sp-wu', 'l2-wu', 'u2-wu'])
-;(function migrateWarmups() {
+// Replace old single warm-up exercises with individual per-exercise rows.
+const OLD_WU_IDS = new Set(['l1-wu', 'u1-wu', 'sp-wu', 'l2-wu', 'u2-wu'])
+;(function migrateWarmupSplit() {
   if (typeof localStorage === 'undefined') return
-  if (localStorage.getItem('gwt_warmup_migrated')) return
+  if (localStorage.getItem('gwt_warmup_split_migrated')) return
   try {
     const raw = localStorage.getItem('gwt_templates')
     if (!raw) return
     const templates = JSON.parse(raw)
-    const updated = templates.map(t => ({
-      ...t,
-      exercises: t.exercises.map(ex =>
-        WARMUP_IDS.has(ex.id) ? { ...ex, exerciseType: 'checklist', category: 'warmup' } : ex
-      ),
-    }))
+    const updated = templates.map(t => {
+      const newWarmups = SEED_WARMUPS[t.id]
+      if (!newWarmups) return t
+      const rest = t.exercises.filter(ex => !OLD_WU_IDS.has(ex.id))
+      return { ...t, exercises: [...newWarmups, ...rest] }
+    })
     localStorage.setItem('gwt_templates', JSON.stringify(updated))
     localStorage.setItem('gwt_checklist_migrated', '1')
     localStorage.setItem('gwt_warmup_migrated', '1')
+    localStorage.setItem('gwt_warmup_split_migrated', '1')
   } catch {}
 })()
 

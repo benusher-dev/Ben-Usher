@@ -5,6 +5,63 @@ function ex(id, name, sets, reps, weight, category, supersetId, restSeconds, not
   return { id, name, sets, reps, weight, isCardio, supersetId, category, restSeconds, notes: notes ?? null, exerciseType }
 }
 
+function wu(id, name, reps, exerciseType, notes) {
+  return ex(id, name, 1, reps, null, 'warmup', null, 0, notes ?? null, exerciseType === 'cardio', exerciseType)
+}
+
+// Exported so the migration in useTemplates.js can replace old single warm-up exercises.
+export const SEED_WARMUPS = {
+  'offszn-lower1': [
+    wu('l1-wu-1', 'Single Leg Calf Raises',            15, 'bw',    'Per side'),
+    wu('l1-wu-2', '90/90 Hip Switches',                10, 'bw',    null),
+    wu('l1-wu-3', 'Hip Thrusts',                       10, 'bw',    null),
+    wu('l1-wu-4', 'Single Leg RDLs',                    5, 'bw',    'Per side'),
+    wu('l1-wu-5', 'Squats',                            10, 'bw',    null),
+    wu('l1-wu-6', 'Side Lunges',                       10, 'bw',    'Per side'),
+    wu('l1-wu-7', 'Split Squats',                      10, 'bw',    'Per side'),
+  ],
+  'offszn-upper1': [
+    wu('u1-wu-1', 'Hang from Bar',                     30, 'hold',  '30 seconds'),
+    wu('u1-wu-2', 'Half-Kneeling Thoracic Rotations',  10, 'bw',    'Per side'),
+    wu('u1-wu-3', 'Prone T-Lifts',                     20, 'bw',    null),
+    wu('u1-wu-4', 'Yoga Push-Ups',                     10, 'bw',    null),
+    wu('u1-wu-5', '90/90 Shoulder Cable Rotation',     10, 'bw',    'Per arm'),
+    wu('u1-wu-6', 'KB Overhead Press Bottoms-Up',      10, 'bw',    'Per side'),
+    wu('u1-wu-7', 'Drop & Catch Push-Up Position',      5, 'bw',    null),
+  ],
+  'offszn-sprints': [
+    wu('sp-wu-1', '2 Min Jog',                          2, 'cardio', null),
+    wu('sp-wu-2', 'Squats',                            10, 'bw',    null),
+    wu('sp-wu-3', 'Walking Lunges',                    10, 'bw',    null),
+    wu('sp-wu-4', 'Single Leg RDL',                     5, 'bw',    'Per side'),
+    wu('sp-wu-5', 'Side Lunge',                         5, 'bw',    'Per side'),
+    wu('sp-wu-6', 'Leg Swings',                         5, 'bw',    'Per side — front/back + lateral'),
+    wu('sp-wu-7', 'A-March',                           10, 'bw',    '10m'),
+    wu('sp-wu-8', 'Single A-Switches',                 20, 'bw',    null),
+    wu('sp-wu-9', 'Lateral Hop and Stick',             10, 'bw',    null),
+  ],
+  'offszn-lower2': [
+    wu('l2-wu-1', 'Single Leg Calf Raises',            15, 'bw',    'Per side'),
+    wu('l2-wu-2', '90/90 Hip Switches',                10, 'bw',    null),
+    wu('l2-wu-3', 'Hip Thrusts',                       10, 'bw',    null),
+    wu('l2-wu-4', 'Single Leg RDLs',                    5, 'bw',    'Per side'),
+    wu('l2-wu-5', 'Squats',                            10, 'bw',    null),
+    wu('l2-wu-6', 'Side Lunges',                       10, 'bw',    'Per side'),
+    wu('l2-wu-7', 'Split Squats',                      10, 'bw',    'Per side'),
+  ],
+  'offszn-upper2': [
+    wu('u2-wu-1', 'Hang from Bar',                     30, 'hold',  '30 seconds'),
+    wu('u2-wu-2', 'Half-Kneeling Thoracic Rotations',  10, 'bw',    'Per side'),
+    wu('u2-wu-3', 'Prone T-Lifts',                     20, 'bw',    null),
+    wu('u2-wu-4', 'Yoga Push-Ups',                     10, 'bw',    null),
+    wu('u2-wu-5', '90/90 Shoulder Cable Rotation',     10, 'bw',    'Per arm'),
+    wu('u2-wu-6', 'KB Overhead Press Bottoms-Up',      10, 'bw',    'Per side'),
+    wu('u2-wu-7', 'Drop & Catch Push-Up Position',      5, 'bw',    null),
+  ],
+}
+
+const OLD_WARMUP_IDS = new Set(['l1-wu', 'u1-wu', 'sp-wu', 'l2-wu', 'u2-wu'])
+
 export const SEED_TEMPLATES = [
   // ─── Lower 1 (Monday) ───────────────────────────────────────────────────────
   {
@@ -13,8 +70,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('l1-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
-        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
+      ...SEED_WARMUPS['offszn-lower1'],
 
       // Block A — circuit, 4 rounds no rest
       ex('l1-a1', 'Pogos',             4, 10, null, 'legs',  'l1-A', 60, 'Start 10 reps — add 2 reps/week. Circuit A: no rest between exercises or rounds (4 rounds).'),
@@ -42,8 +98,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('u1-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
-        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
+      ...SEED_WARMUPS['offszn-upper1'],
 
       // Block A — circuit, 3 rounds no rest
       ex('u1-a1', 'Supine Med Ball Throws',  3, 3, null, 'other', 'u1-A', 60, '4kg med ball. Circuit A: no rest between exercises or rounds (3 rounds).'),
@@ -72,8 +127,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('sp-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
-        '2 min jog · Squats ×10 · Walking lunges ×10 · Single leg RDL ×5/side · Side lunge ×5/side · Leg swings ×5/side (front/back + side) · A-march 10m · Single A-switches ×20 · Lateral hop and stick ×10', false, 'checklist'),
+      ...SEED_WARMUPS['offszn-sprints'],
 
       // Block A — sprint prep circuit
       ex('sp-a1', 'Wall Drive',           3, 5,  null, 'other', 'sp-A', 90, '5/leg — add 1 rep every 2 weeks. Sprint prep circuit.'),
@@ -97,8 +151,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('l2-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
-        'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
+      ...SEED_WARMUPS['offszn-lower2'],
 
       // Block A — circuit, 4 rounds no rest
       ex('l2-a1', 'Lateral Wall ISOs',       4, 10, null, 'legs', 'l2-A', 60, '10s each side. Circuit A: no rest between exercises or rounds (4 rounds).'),
@@ -125,8 +178,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('u2-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
-        'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
+      ...SEED_WARMUPS['offszn-upper2'],
 
       // Block A — circuit
       ex('u2-a1', 'Plyometric Push-Ups',              3, 5, null, 'chest', 'u2-A', 60, 'Start 5 reps — add 1 rep every 2 weeks.'),
