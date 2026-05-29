@@ -276,9 +276,9 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
     const catLabel = CATEGORIES.find(c => c.id === ex.category)?.label ?? 'Warm-up'
     const catColor = CATEGORY_COLOR[ex.category] ?? 'bg-red-100 text-red-700'
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden border-l-4 border-l-red-400 dark:border-l-red-500">
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-3">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
+        <div className="mb-3">
+          <div className="flex items-center gap-2">
             <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${catColor}`}>{catLabel}</span>
             <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
@@ -287,22 +287,18 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
               </svg>
             </button>
           </div>
-          {ex.notes && (
-            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/10 rounded-xl text-xs text-red-700 dark:text-red-300 leading-relaxed whitespace-pre-line">
-              {ex.notes}
-            </div>
-          )}
-          <button
-            onClick={() => updateSet(exIdx, 0, { ...ex.sets[0], done: !isDone })}
-            className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
-              isDone
-                ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
-                : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
-            }`}
-          >
-            {isDone ? '✓ Warm-Up Done' : 'Mark Warm-Up Complete'}
-          </button>
+          {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
         </div>
+        <button
+          onClick={() => updateSet(exIdx, 0, { ...ex.sets[0], done: !isDone })}
+          className={`w-full py-3 rounded-xl font-semibold text-sm transition-colors ${
+            isDone
+              ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/40'
+          }`}
+        >
+          {isDone ? '✓ Warm-Up Done' : 'Mark Warm-Up Complete'}
+        </button>
       </div>
     )
   }
