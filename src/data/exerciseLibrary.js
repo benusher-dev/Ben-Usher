@@ -1,4 +1,5 @@
 export const CATEGORIES = [
+  { id: 'warmup',    label: 'Warm-up',   color: 'bg-red-100 text-red-700' },
   { id: 'chest',     label: 'Chest',     color: 'bg-rose-100 text-rose-700' },
   { id: 'back',      label: 'Back',      color: 'bg-blue-100 text-blue-700' },
   { id: 'shoulders', label: 'Shoulders', color: 'bg-violet-100 text-violet-700' },

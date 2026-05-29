@@ -14,11 +14,11 @@ import { SEED_TEMPLATES } from '../data/seedTemplates'
   } catch {}
 })()
 
-// Backfill warm-up exercises to exerciseType:'checklist' for users who seeded before this was added.
+// Backfill warm-up exercises to exerciseType:'checklist' + category:'warmup'.
 const WARMUP_IDS = new Set(['l1-wu', 'u1-wu', 'sp-wu', 'l2-wu', 'u2-wu'])
-;(function migrateChecklist() {
+;(function migrateWarmups() {
   if (typeof localStorage === 'undefined') return
-  if (localStorage.getItem('gwt_checklist_migrated')) return
+  if (localStorage.getItem('gwt_warmup_migrated')) return
   try {
     const raw = localStorage.getItem('gwt_templates')
     if (!raw) return
@@ -26,11 +26,12 @@ const WARMUP_IDS = new Set(['l1-wu', 'u1-wu', 'sp-wu', 'l2-wu', 'u2-wu'])
     const updated = templates.map(t => ({
       ...t,
       exercises: t.exercises.map(ex =>
-        WARMUP_IDS.has(ex.id) ? { ...ex, exerciseType: 'checklist' } : ex
+        WARMUP_IDS.has(ex.id) ? { ...ex, exerciseType: 'checklist', category: 'warmup' } : ex
       ),
     }))
     localStorage.setItem('gwt_templates', JSON.stringify(updated))
     localStorage.setItem('gwt_checklist_migrated', '1')
+    localStorage.setItem('gwt_warmup_migrated', '1')
   } catch {}
 })()
 

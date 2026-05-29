@@ -13,7 +13,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('l1-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
+      ex('l1-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
         'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
 
       // Block A — circuit, 4 rounds no rest
@@ -42,7 +42,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('u1-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
+      ex('u1-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
         'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
 
       // Block A — circuit, 3 rounds no rest
@@ -72,7 +72,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('sp-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
+      ex('sp-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
         '2 min jog · Squats ×10 · Walking lunges ×10 · Single leg RDL ×5/side · Side lunge ×5/side · Leg swings ×5/side (front/back + side) · A-march 10m · Single A-switches ×20 · Lateral hop and stick ×10', false, 'checklist'),
 
       // Block A — sprint prep circuit
@@ -97,7 +97,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('l2-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
+      ex('l2-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
         'Single leg calf raises ×15/side · 90/90 hip switches · Hip thrusts ×10 · Single leg RDLs ×5/side · Squats ×10 · Side lunges ×10/side · Split squats ×10/side', false, 'checklist'),
 
       // Block A — circuit, 4 rounds no rest
@@ -125,7 +125,7 @@ export const SEED_TEMPLATES = [
     createdAt: '2025-01-01T00:00:00.000Z',
     updatedAt: '2025-01-01T00:00:00.000Z',
     exercises: [
-      ex('u2-wu', 'Warm-Up', 1, 1, null, 'other', null, 60,
+      ex('u2-wu', 'Warm-Up', 1, 1, null, 'warmup', null, 60,
         'Hang from bar ×30s · Half-kneeling thoracic rotations ×10/side · Prone T-lifts ×20 · Yoga push-ups ×10 · 90/90 shoulder cable rotation ×10/arm · KB overhead press bottoms-up ×10/side · Drop & catch push-up position ×5', false, 'checklist'),
 
       // Block A — circuit
