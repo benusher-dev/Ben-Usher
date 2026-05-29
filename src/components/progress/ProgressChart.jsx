@@ -1,5 +1,3 @@
-import { formatDate } from '../../utils/dateHelpers'
-
 const W = 320
 const H = 180
 const PAD = { top: 16, right: 16, bottom: 40, left: 44 }

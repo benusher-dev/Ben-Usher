@@ -9,7 +9,6 @@ import { WorkoutSummary } from '../components/sessions/WorkoutSummary'
 import { PlateCalculator } from '../components/tools/PlateCalculator'
 import { ExercisePicker } from '../components/templates/ExercisePicker'
 import { generateId } from '../utils/dateHelpers'
-import { CATEGORY_COLOR, CATEGORIES } from '../data/exerciseLibrary'
 
 const REST_PRESETS = [
   { label: '30s', seconds: 30 },
