@@ -6,6 +6,7 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { TemplateCard } from '../components/templates/TemplateCard'
 import { WorkoutSummary } from '../components/sessions/WorkoutSummary'
 import { PlateCalculator } from '../components/tools/PlateCalculator'
+import { ExercisePicker } from '../components/templates/ExercisePicker'
 import { generateId } from '../utils/dateHelpers'
 
 const REST_PRESETS = [
@@ -335,6 +336,7 @@ export function LogWorkout() {
   const [elapsed, setElapsed] = useState(0)
   const [showPlateCalc, setShowPlateCalc] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showAddExercise, setShowAddExercise] = useState(false)
   const [autoRest, setAutoRest] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gwt_auto_rest') ?? 'false') } catch { return false }
   })
@@ -426,6 +428,23 @@ export function LogWorkout() {
 
   function removeSet(exIndex, setIndex) {
     setLogExercises(prev => prev.map((ex, i) => i === exIndex && ex.sets.length > 1 ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) } : ex))
+  }
+
+  function handleAddExercise(exercise) {
+    setLogExercises(prev => [...prev, {
+      id: generateId(),
+      exerciseId: generateId(),
+      name: exercise.name,
+      isCardio: exercise.category === 'cardio',
+      restSeconds: 90,
+      supersetId: null,
+      sets: Array.from({ length: exercise.sets || 3 }, () => ({
+        reps: exercise.reps ?? '',
+        weight: exercise.weight ?? '',
+        done: false,
+        rpe: null,
+      })),
+    }])
   }
 
   function handleFinish() {
@@ -625,12 +644,27 @@ export function LogWorkout() {
               />
             </div>
 
+            <button
+              onClick={() => setShowAddExercise(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl text-sm font-semibold text-gray-500 dark:text-gray-400 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 dark:hover:border-indigo-500 transition-colors"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              Add Exercise
+            </button>
+
             <Button size="lg" className="w-full" onClick={handleFinish}>Finish Workout</Button>
           </div>
         </div>
       </div>
 
       {showPlateCalc && <PlateCalculator onClose={() => setShowPlateCalc(false)} />}
+      <ExercisePicker
+        open={showAddExercise}
+        onAdd={handleAddExercise}
+        onClose={() => setShowAddExercise(false)}
+      />
       {showSettings && (
         <SettingsSheet
           autoRest={autoRest} showRPE={showRPE}
