@@ -527,6 +527,32 @@ export function LogWorkout() {
   return (
     <>
       <div className="flex flex-col h-full">
+        {/* ── Rest timer banner ── */}
+        {timer && !timer.done && (
+          <div className="flex-shrink-0 bg-gradient-to-r from-sky-400 to-blue-500 px-5 pt-4 pb-5 flex items-center">
+            <div className="flex-1" />
+            <div className="text-center">
+              <p className="text-xs font-bold text-white/70 uppercase tracking-[0.2em] mb-1">Rest</p>
+              <p className="text-6xl font-bold text-white tabular-nums leading-none tracking-tight">
+                {formatCountdown(timer.remaining)}
+              </p>
+              <div className="mt-3 h-1.5 w-40 bg-white/20 rounded-full overflow-hidden mx-auto">
+                <div
+                  className="h-full bg-white rounded-full transition-all duration-1000"
+                  style={{ width: `${(timer.remaining / timer.total) * 100}%` }}
+                />
+              </div>
+            </div>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={stopTimer}
+                className="text-sm font-semibold text-white/80 hover:text-white bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-xl transition-colors"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        )}
         <PageHeader
           title={selectedTemplate.name}
           accent
