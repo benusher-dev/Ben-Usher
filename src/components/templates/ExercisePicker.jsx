@@ -25,7 +25,7 @@ export function ExercisePicker({ open, onAdd, onClose }) {
   const hasExactMatch = filtered.some(ex => ex.name.toLowerCase() === search.trim().toLowerCase())
 
   function handleAdd(ex) {
-    onAdd({ name: ex.name, sets: 3, reps: 10, weight: null })
+    onAdd({ name: ex.name, sets: 3, reps: 10, weight: null, category: ex.category })
     onClose()
   }
 
@@ -34,7 +34,7 @@ export function ExercisePicker({ open, onAdd, onClose }) {
     if (!name) return
     const category = activeCategory !== 'all' ? activeCategory : 'other'
     addCustomExercise(name, category)
-    onAdd({ name, sets: 3, reps: 10, weight: null })
+    onAdd({ name, sets: 3, reps: 10, weight: null, category })
     onClose()
   }
 

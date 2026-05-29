@@ -82,6 +82,7 @@ export function TemplateForm({ initial, onSave, onCancel }) {
     setExercises(prev => [...prev, {
       id: generateId(),
       ...exercise,
+      isCardio: exercise.category === 'cardio',
       supersetId: pickerSupersetId ?? null,
     }])
     setErrors(prev => ({ ...prev, exercises: undefined }))
@@ -89,7 +90,7 @@ export function TemplateForm({ initial, onSave, onCancel }) {
 
   function addCustomBlank(supersetId = null) {
     setExercises(prev => [...prev, {
-      id: generateId(), name: '', sets: 3, reps: 10, weight: null, supersetId,
+      id: generateId(), name: '', sets: 3, reps: 10, weight: null, isCardio: false, supersetId,
     }])
     setErrors(prev => ({ ...prev, exercises: undefined }))
   }

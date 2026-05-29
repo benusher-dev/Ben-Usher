@@ -22,11 +22,14 @@ function buildLogExercises(template) {
     id: generateId(),
     exerciseId: ex.id,
     name: ex.name,
+    isCardio: ex.isCardio ?? false,
     restSeconds: ex.restSeconds ?? 90,
     supersetId: ex.supersetId ?? null,
     sets: Array.from({ length: Math.max(1, ex.sets || 1) }, () => ({
       reps: ex.reps ?? '',
       weight: ex.weight ?? '',
+      done: false,
+      rpe: null,
     })),
   }))
 }
@@ -46,6 +49,14 @@ function formatCountdown(s) {
   return m > 0 ? `${m}:${String(s % 60).padStart(2, '0')}` : `${s}s`
 }
 
+function formatElapsed(s) {
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const sec = s % 60
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
+  return `${m}:${String(sec).padStart(2, '0')}`
+}
+
 function playBeep() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
@@ -61,43 +72,107 @@ function playBeep() {
   } catch {}
 }
 
-// ── Set row ──────────────────────────────────────────────────────────────────
-function SetRow({ set, setIndex, prevSet, onChange }) {
-  const inputCls = 'rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500'
-  const prevReps = prevSet?.reps
-  const prevWeight = prevSet?.weight
-
+// ── Column header ─────────────────────────────────────────────────────────────
+function SetHeader({ isCardio, showRPE }) {
   return (
-    <div className="grid grid-cols-3 gap-2 items-center py-1">
-      <div className="text-center">
-        <span className="text-sm text-gray-400 dark:text-gray-500 font-medium">{setIndex + 1}</span>
-        {prevSet && (
-          <p className="text-[9px] text-gray-300 dark:text-gray-600 leading-none mt-0.5">prev</p>
-        )}
+    <div className="flex items-center gap-1.5 px-1 mb-1">
+      <div className="flex-shrink-0 w-6" />
+      <div className="flex-shrink-0 w-5 text-center">
+        <span className="text-xs text-gray-400 font-medium">Set</span>
       </div>
-      <div>
-        <input
-          type="number" min="0" placeholder="Reps"
-          value={set.reps}
-          onChange={e => onChange({ ...set, reps: e.target.value === '' ? '' : Number(e.target.value) })}
-          className={inputCls}
-        />
-        {prevReps != null && <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevReps}</p>}
+      <div className="flex-1 text-center">
+        <span className="text-xs text-gray-400 font-medium">{isCardio ? 'Duration' : 'Reps'}</span>
       </div>
-      <div>
-        <input
-          type="number" min="0" step="0.5" placeholder="kg"
-          value={set.weight}
-          onChange={e => onChange({ ...set, weight: e.target.value === '' ? '' : Number(e.target.value) })}
-          className={inputCls}
-        />
-        {prevWeight != null && prevWeight > 0 && <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevWeight}kg</p>}
+      <div className="flex-1 text-center">
+        <span className="text-xs text-gray-400 font-medium">{isCardio ? 'Distance' : 'Weight'}</span>
       </div>
+      {showRPE && (
+        <div className="flex-shrink-0 w-12 text-center">
+          <span className="text-xs text-gray-400 font-medium">RPE</span>
+        </div>
+      )}
+      <div className="flex-shrink-0 w-6" />
     </div>
   )
 }
 
-// ── Rest timer ───────────────────────────────────────────────────────────────
+// ── Set row ───────────────────────────────────────────────────────────────────
+function SetRow({ set, setIndex, prevSet, isCardio, showRPE, canRemove, onChange, onToggleDone, onRemove }) {
+  const borderCls = set.done ? 'border-emerald-200 dark:border-emerald-800' : 'border-gray-200 dark:border-gray-600'
+  const inputCls = `rounded-lg border ${borderCls} bg-white dark:bg-gray-700 dark:text-white px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full`
+  const dimmed = set.done ? 'opacity-60' : ''
+
+  return (
+    <div className={`flex items-center gap-1.5 py-1 px-1 rounded-xl transition-colors ${set.done ? 'bg-emerald-50 dark:bg-emerald-900/20' : ''}`}>
+      <button
+        type="button"
+        onClick={() => onToggleDone(!set.done)}
+        className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+          set.done
+            ? 'bg-emerald-500 border-emerald-500 text-white'
+            : 'border-gray-300 dark:border-gray-600 hover:border-emerald-400'
+        }`}
+      >
+        {set.done && (
+          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        )}
+      </button>
+
+      <div className="flex-shrink-0 w-5 text-center">
+        <span className="text-sm text-gray-400 dark:text-gray-500 font-medium">{setIndex + 1}</span>
+      </div>
+
+      <div className={`flex-1 ${dimmed}`}>
+        <input
+          type="number" min="0" placeholder={isCardio ? 'min' : 'reps'}
+          value={set.reps ?? ''}
+          onChange={e => onChange({ ...set, reps: e.target.value === '' ? '' : Number(e.target.value) })}
+          className={inputCls}
+        />
+        {prevSet?.reps != null && (
+          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevSet.reps}{isCardio ? 'm' : ''}</p>
+        )}
+      </div>
+
+      <div className={`flex-1 ${dimmed}`}>
+        <input
+          type="number" min="0" step={isCardio ? '0.1' : '0.5'} placeholder={isCardio ? 'km' : 'kg'}
+          value={set.weight ?? ''}
+          onChange={e => onChange({ ...set, weight: e.target.value === '' ? '' : Number(e.target.value) })}
+          className={inputCls}
+        />
+        {prevSet?.weight != null && prevSet.weight > 0 && (
+          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevSet.weight}{isCardio ? 'km' : 'kg'}</p>
+        )}
+      </div>
+
+      {showRPE && (
+        <div className={`flex-shrink-0 w-12 ${dimmed}`}>
+          <input
+            type="number" min="1" max="10" placeholder="RPE"
+            value={set.rpe ?? ''}
+            onChange={e => onChange({ ...set, rpe: e.target.value === '' ? null : Math.min(10, Math.max(1, Number(e.target.value))) })}
+            className={`${inputCls} text-xs`}
+          />
+        </div>
+      )}
+
+      {canRemove ? (
+        <button onClick={onRemove} className="flex-shrink-0 w-6 flex items-center justify-center p-0.5 text-gray-300 dark:text-gray-600 hover:text-red-400 transition-colors">
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      ) : (
+        <div className="flex-shrink-0 w-6" />
+      )}
+    </div>
+  )
+}
+
+// ── Rest timer ────────────────────────────────────────────────────────────────
 function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onStop }) {
   const isActive = timer?.timerId === timerId && !timer.done
   const isDone   = timer?.timerId === timerId &&  timer.done
@@ -167,35 +242,30 @@ function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onSt
   )
 }
 
-// ── Exercise card (single) ───────────────────────────────────────────────────
-function ExerciseCard({ ex, exIdx, prevSets, timer, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer }) {
+// ── Exercise card (single) ────────────────────────────────────────────────────
+function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer }) {
   const timerId = `ex_${ex.id}`
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
-      <p className="font-semibold text-gray-900 dark:text-white mb-3">{ex.name}</p>
-      <div className="grid grid-cols-3 gap-2 mb-1">
-        <span className="text-xs text-gray-400 font-medium text-center">Set</span>
-        <span className="text-xs text-gray-400 font-medium text-center">Reps</span>
-        <span className="text-xs text-gray-400 font-medium text-center">Weight (kg)</span>
+      <div className="flex items-center gap-2 mb-3">
+        <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
+        {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
       </div>
+      <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
       {ex.sets.map((set, setIdx) => (
-        <div key={setIdx} className="flex items-center gap-1">
-          <div className="flex-1">
-            <SetRow
-              set={set}
-              setIndex={setIdx}
-              prevSet={prevSets?.[setIdx]}
-              onChange={updated => updateSet(exIdx, setIdx, updated)}
-            />
-          </div>
-          {ex.sets.length > 1 && (
-            <button onClick={() => removeSet(exIdx, setIdx)} className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-400 flex-shrink-0">
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
+        <SetRow
+          key={setIdx}
+          set={set} setIndex={setIdx}
+          prevSet={prevSets?.[setIdx]}
+          isCardio={ex.isCardio} showRPE={showRPE}
+          canRemove={ex.sets.length > 1}
+          onChange={updated => updateSet(exIdx, setIdx, updated)}
+          onToggleDone={done => {
+            updateSet(exIdx, setIdx, { ...set, done })
+            if (done && autoRest) startTimer(timerId, ex.restSeconds)
+          }}
+          onRemove={() => removeSet(exIdx, setIdx)}
+        />
       ))}
       <button onClick={() => addSet(exIdx)} className="mt-2 w-full py-1.5 border border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-400 hover:text-indigo-600 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors">
         + Add Set
@@ -205,7 +275,54 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, updateSet, addSet, removeSet
   )
 }
 
-// ── Main component ───────────────────────────────────────────────────────────
+// ── Settings sheet ────────────────────────────────────────────────────────────
+function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="pt-3 pb-1 flex justify-center">
+          <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full" />
+        </div>
+        <div className="px-5 pt-2 pb-4">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">Workout Settings</h3>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Auto-start rest timer</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Timer starts when you mark a set done</p>
+              </div>
+              <button
+                onClick={onToggleAutoRest}
+                className={`relative flex-shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors ${autoRest ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-600'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${autoRest ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Show RPE</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Rate of Perceived Exertion (1–10) per set</p>
+              </div>
+              <button
+                onClick={onToggleRPE}
+                className={`relative flex-shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors ${showRPE ? 'bg-indigo-600' : 'bg-gray-200 dark:bg-gray-600'}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${showRPE ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
 export function LogWorkout() {
   const { templates, sessions, logTemplateId, setLogTemplateId, addSession, setActivePage } = useApp()
   const [step, setStep] = useState(1)
@@ -215,8 +332,17 @@ export function LogWorkout() {
   const [notes, setNotes] = useState('')
   const [summaryData, setSummaryData] = useState(null)
   const [timer, setTimer] = useState(null)
+  const [elapsed, setElapsed] = useState(0)
   const [showPlateCalc, setShowPlateCalc] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
+  const [autoRest, setAutoRest] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gwt_auto_rest') ?? 'false') } catch { return false }
+  })
+  const [showRPE, setShowRPE] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('gwt_show_rpe') ?? 'false') } catch { return false }
+  })
   const timerRef = useRef(null)
+  const elapsedRef = useRef(null)
   const startedAtRef = useRef(null)
 
   const exerciseGroups = useMemo(() => {
@@ -239,7 +365,19 @@ export function LogWorkout() {
     if (t) beginWorkout(t)
   }, [logTemplateId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => () => clearInterval(timerRef.current), [])
+  useEffect(() => () => { clearInterval(timerRef.current); clearInterval(elapsedRef.current) }, [])
+
+  useEffect(() => {
+    if (step === 2) {
+      elapsedRef.current = setInterval(() => setElapsed(prev => prev + 1), 1000)
+    } else {
+      clearInterval(elapsedRef.current)
+    }
+    return () => clearInterval(elapsedRef.current)
+  }, [step])
+
+  useEffect(() => { localStorage.setItem('gwt_auto_rest', JSON.stringify(autoRest)) }, [autoRest])
+  useEffect(() => { localStorage.setItem('gwt_show_rpe', JSON.stringify(showRPE)) }, [showRPE])
 
   function beginWorkout(template) {
     clearInterval(timerRef.current)
@@ -248,6 +386,7 @@ export function LogWorkout() {
     setPrevLookup(buildPrevLookup(sessions, template.id))
     setNotes('')
     setTimer(null)
+    setElapsed(0)
     setStep(2)
     startedAtRef.current = new Date().toISOString()
   }
@@ -282,7 +421,7 @@ export function LogWorkout() {
   }
 
   function addSet(exIndex) {
-    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, sets: [...ex.sets, { reps: '', weight: '' }] } : ex))
+    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, sets: [...ex.sets, { reps: '', weight: '', done: false, rpe: null }] } : ex))
   }
 
   function removeSet(exIndex, setIndex) {
@@ -300,7 +439,12 @@ export function LogWorkout() {
       notes: notes.trim(),
       exercises: logExercises.map(ex => ({
         id: ex.id, exerciseId: ex.exerciseId, name: ex.name,
-        sets: ex.sets.map(s => ({ reps: Number(s.reps) || 0, weight: s.weight === '' ? null : Number(s.weight) })),
+        isCardio: ex.isCardio,
+        sets: ex.sets.map(s => ({
+          reps: Number(s.reps) || 0,
+          weight: s.weight === '' || s.weight === null ? null : Number(s.weight),
+          rpe: s.rpe ?? null,
+        })),
       })),
     }
     const newSession = addSession(sessionPayload, startedAtRef.current)
@@ -310,16 +454,16 @@ export function LogWorkout() {
   }
 
   function handleCancel() {
-    clearInterval(timerRef.current); setTimer(null); setStep(1)
+    clearInterval(timerRef.current); setTimer(null); setStep(1); setElapsed(0)
     setSelectedTemplate(null); setLogExercises([]); setNotes(''); startedAtRef.current = null
   }
 
   function handleSummaryDone() {
     setStep(1); setSelectedTemplate(null); setLogExercises([]); setNotes('')
-    setSummaryData(null); setTimer(null); startedAtRef.current = null; setActivePage('history')
+    setSummaryData(null); setTimer(null); setElapsed(0); startedAtRef.current = null; setActivePage('history')
   }
 
-  // ── Step 1 ───────────────────────────────────────────────────────────────
+  // ── Step 1 ────────────────────────────────────────────────────────────────
   if (step === 1) {
     return (
       <div className="flex flex-col h-full">
@@ -338,7 +482,7 @@ export function LogWorkout() {
     )
   }
 
-  // ── Step 3 ───────────────────────────────────────────────────────────────
+  // ── Step 3 ────────────────────────────────────────────────────────────────
   if (step === 3 && summaryData) {
     return (
       <div className="flex flex-col h-full">
@@ -355,7 +499,7 @@ export function LogWorkout() {
     )
   }
 
-  // ── Step 2 ───────────────────────────────────────────────────────────────
+  // ── Step 2 ────────────────────────────────────────────────────────────────
   if (!selectedTemplate) return null
 
   const hasPrev = Object.keys(prevLookup).length > 0
@@ -366,14 +510,29 @@ export function LogWorkout() {
         <PageHeader
           title={selectedTemplate.name}
           action={
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-mono font-semibold text-gray-500 dark:text-gray-400 tabular-nums bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+                {formatElapsed(elapsed)}
+              </span>
               <button
                 onClick={() => setShowPlateCalc(true)}
                 className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
-                title="Plate Calculator"
+                title="Plate / 1RM Calculator"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" /><path d="M8 12h8M12 8v8" />
+                </svg>
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                title="Workout Settings"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
+                  <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
+                  <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
                 </svg>
               </button>
               <button onClick={handleCancel} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium">
@@ -387,11 +546,11 @@ export function LogWorkout() {
             {hasPrev && (
               <div className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
                 <svg className="h-3.5 w-3.5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                <p className="text-xs text-gray-400 dark:text-gray-500">Small numbers below inputs show your last session's values</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500">Small numbers show your last session's values</p>
               </div>
             )}
 
-            {exerciseGroups.map((group, gi) => {
+            {exerciseGroups.map((group) => {
               if (group.type === 'single') {
                 const { ex, i: exIdx } = group.items[0]
                 return (
@@ -399,7 +558,7 @@ export function LogWorkout() {
                     key={ex.id}
                     ex={ex} exIdx={exIdx}
                     prevSets={prevLookup[ex.name]}
-                    timer={timer}
+                    timer={timer} showRPE={showRPE} autoRest={autoRest}
                     updateSet={updateSet} addSet={addSet} removeSet={removeSet}
                     updateRestSeconds={updateRestSeconds} startTimer={startTimer} stopTimer={stopTimer}
                   />
@@ -422,25 +581,25 @@ export function LogWorkout() {
                   <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
                     {group.items.map(({ ex, i: exIdx }) => (
                       <div key={ex.id} className="px-4 py-3">
-                        <p className="font-semibold text-gray-900 dark:text-white mb-3">{ex.name}</p>
-                        <div className="grid grid-cols-3 gap-2 mb-1">
-                          <span className="text-xs text-gray-400 font-medium text-center">Set</span>
-                          <span className="text-xs text-gray-400 font-medium text-center">Reps</span>
-                          <span className="text-xs text-gray-400 font-medium text-center">Weight (kg)</span>
+                        <div className="flex items-center gap-2 mb-3">
+                          <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
+                          {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
                         </div>
+                        <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
                         {ex.sets.map((set, setIdx) => (
-                          <div key={setIdx} className="flex items-center gap-1">
-                            <div className="flex-1">
-                              <SetRow set={set} setIndex={setIdx} prevSet={prevLookup[ex.name]?.[setIdx]} onChange={updated => updateSet(exIdx, setIdx, updated)} />
-                            </div>
-                            {ex.sets.length > 1 && (
-                              <button onClick={() => removeSet(exIdx, setIdx)} className="p-1 text-gray-300 dark:text-gray-600 hover:text-red-400 flex-shrink-0">
-                                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                                </svg>
-                              </button>
-                            )}
-                          </div>
+                          <SetRow
+                            key={setIdx}
+                            set={set} setIndex={setIdx}
+                            prevSet={prevLookup[ex.name]?.[setIdx]}
+                            isCardio={ex.isCardio} showRPE={showRPE}
+                            canRemove={ex.sets.length > 1}
+                            onChange={updated => updateSet(exIdx, setIdx, updated)}
+                            onToggleDone={done => {
+                              updateSet(exIdx, setIdx, { ...set, done })
+                              if (done && autoRest) startTimer(ssTimerId, ssRestSeconds)
+                            }}
+                            onRemove={() => removeSet(exIdx, setIdx)}
+                          />
                         ))}
                         <button onClick={() => addSet(exIdx)} className="mt-2 w-full py-1.5 border border-dashed border-gray-200 dark:border-gray-600 rounded-lg text-xs text-gray-400 hover:text-indigo-600 hover:border-indigo-300 transition-colors">
                           + Add Set
@@ -470,7 +629,16 @@ export function LogWorkout() {
           </div>
         </div>
       </div>
+
       {showPlateCalc && <PlateCalculator onClose={() => setShowPlateCalc(false)} />}
+      {showSettings && (
+        <SettingsSheet
+          autoRest={autoRest} showRPE={showRPE}
+          onToggleAutoRest={() => setAutoRest(v => !v)}
+          onToggleRPE={() => setShowRPE(v => !v)}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
     </>
   )
 }
