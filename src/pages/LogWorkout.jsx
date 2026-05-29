@@ -18,13 +18,24 @@ const REST_PRESETS = [
   { label: '3m',  seconds: 180 },
 ]
 
+function getExerciseType(ex) {
+  return ex.exerciseType ?? (ex.isCardio ? 'cardio' : 'weight')
+}
+
+const TYPE_META = {
+  weight: { label: null },
+  bw:     { label: 'Bodyweight',  cls: 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' },
+  hold:   { label: '⏱ Hold',      cls: 'text-violet-600 bg-violet-50 dark:bg-violet-900/30' },
+  cardio: { label: '🏃 Cardio',   cls: 'text-sky-500 bg-sky-50 dark:bg-sky-900/30' },
+}
+
 function buildLogExercises(template) {
   return template.exercises.map(ex => ({
     id: generateId(),
     exerciseId: ex.id,
     name: ex.name,
     notes: ex.notes ?? null,
-    isCardio: ex.isCardio ?? false,
+    exerciseType: ex.exerciseType ?? (ex.isCardio ? 'cardio' : 'weight'),
     restSeconds: ex.restSeconds ?? 90,
     supersetId: ex.supersetId ?? null,
     sets: Array.from({ length: Math.max(1, ex.sets || 1) }, () => ({
@@ -76,7 +87,9 @@ function playBeep() {
 }
 
 // ── Column header ─────────────────────────────────────────────────────────────
-function SetHeader({ isCardio, showRPE }) {
+function SetHeader({ exerciseType, showRPE }) {
+  const col1 = { cardio: 'Duration', hold: 'Secs', weight: 'Reps', bw: 'Reps' }[exerciseType] ?? 'Reps'
+  const col2 = { cardio: 'Distance', hold: '+kg (opt)', weight: 'Weight', bw: '+kg (opt)' }[exerciseType] ?? 'Weight'
   return (
     <div className="flex items-center gap-1.5 px-1 mb-1">
       <div className="flex-shrink-0 w-6" />
@@ -84,10 +97,10 @@ function SetHeader({ isCardio, showRPE }) {
         <span className="text-xs text-gray-400 font-medium">Set</span>
       </div>
       <div className="flex-1 text-center">
-        <span className="text-xs text-gray-400 font-medium">{isCardio ? 'Duration' : 'Reps'}</span>
+        <span className="text-xs text-gray-400 font-medium">{col1}</span>
       </div>
       <div className="flex-1 text-center">
-        <span className="text-xs text-gray-400 font-medium">{isCardio ? 'Distance' : 'Weight'}</span>
+        <span className="text-xs text-gray-400 font-medium">{col2}</span>
       </div>
       {showRPE && (
         <div className="flex-shrink-0 w-12 text-center">
@@ -100,7 +113,7 @@ function SetHeader({ isCardio, showRPE }) {
 }
 
 // ── Set row ───────────────────────────────────────────────────────────────────
-function SetRow({ set, setIndex, prevSet, isCardio, showRPE, canRemove, onChange, onToggleDone, onRemove }) {
+function SetRow({ set, setIndex, prevSet, exerciseType, showRPE, canRemove, onChange, onToggleDone, onRemove }) {
   const borderCls = set.done ? 'border-emerald-200 dark:border-emerald-800' : 'border-gray-200 dark:border-gray-600'
   const inputCls = `rounded-lg border ${borderCls} bg-white dark:bg-gray-700 dark:text-white px-2 py-1.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full`
   const dimmed = set.done ? 'opacity-60' : ''
@@ -129,25 +142,31 @@ function SetRow({ set, setIndex, prevSet, isCardio, showRPE, canRemove, onChange
 
       <div className={`flex-1 ${dimmed}`}>
         <input
-          type="number" min="0" placeholder={isCardio ? 'min' : 'reps'}
+          type="number" min="0"
+          placeholder={{ cardio: 'min', hold: 'secs', weight: 'reps', bw: 'reps' }[exerciseType] ?? 'reps'}
           value={set.reps ?? ''}
           onChange={e => onChange({ ...set, reps: e.target.value === '' ? '' : Number(e.target.value) })}
           className={inputCls}
         />
         {prevSet?.reps != null && (
-          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevSet.reps}{isCardio ? 'm' : ''}</p>
+          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">
+            {prevSet.reps}{exerciseType === 'cardio' ? 'm' : exerciseType === 'hold' ? 's' : ''}
+          </p>
         )}
       </div>
 
       <div className={`flex-1 ${dimmed}`}>
         <input
-          type="number" min="0" step={isCardio ? '0.1' : '0.5'} placeholder={isCardio ? 'km' : 'kg'}
+          type="number" min="0" step={exerciseType === 'cardio' ? '0.1' : '0.5'}
+          placeholder={{ cardio: 'km', hold: '+kg', weight: 'kg', bw: '+kg' }[exerciseType] ?? 'kg'}
           value={set.weight ?? ''}
           onChange={e => onChange({ ...set, weight: e.target.value === '' ? '' : Number(e.target.value) })}
           className={inputCls}
         />
         {prevSet?.weight != null && prevSet.weight > 0 && (
-          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">{prevSet.weight}{isCardio ? 'km' : 'kg'}</p>
+          <p className="text-[9px] text-gray-300 dark:text-gray-600 text-center mt-0.5">
+            {prevSet.weight}{exerciseType === 'cardio' ? 'km' : 'kg'}
+          </p>
         )}
       </div>
 
@@ -248,12 +267,14 @@ function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onSt
 // ── Exercise card (single) ────────────────────────────────────────────────────
 function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer, onEditExercise }) {
   const timerId = `ex_${ex.id}`
+  const exType = getExerciseType(ex)
+  const badge  = TYPE_META[exType]
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
       <div className="mb-3">
         <div className="flex items-center gap-2">
           <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
-          {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+          {badge.label && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge.cls}`}>{badge.label}</span>}
           <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
             <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -262,13 +283,13 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
         </div>
         {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
       </div>
-      <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
+      <SetHeader exerciseType={exType} showRPE={showRPE} />
       {ex.sets.map((set, setIdx) => (
         <SetRow
           key={set.id}
           set={set} setIndex={setIdx}
           prevSet={prevSets?.[setIdx]}
-          isCardio={ex.isCardio} showRPE={showRPE}
+          exerciseType={exType} showRPE={showRPE}
           canRemove={ex.sets.length > 1}
           onChange={updated => updateSet(exIdx, setIdx, updated)}
           onToggleDone={done => {
@@ -286,53 +307,141 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
   )
 }
 
+const EX_TYPES = [
+  { value: 'weight', label: 'Weight',     sub: 'reps + kg',   icon: '🏋️' },
+  { value: 'bw',     label: 'Bodyweight', sub: 'reps + opt kg', icon: '🙆' },
+  { value: 'hold',   label: 'Hold / ISO', sub: 'secs + opt kg', icon: '⏱️' },
+  { value: 'cardio', label: 'Cardio',     sub: 'dur + dist',  icon: '🏃' },
+]
+
 // ── Exercise edit sheet ───────────────────────────────────────────────────────
-function ExerciseEditSheet({ ex, exIdx, onSave, onClose }) {
-  const [name, setName]   = useState(ex.name)
-  const [notes, setNotes] = useState(ex.notes ?? '')
+function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
+  const [name, setName]         = useState(ex.name)
+  const [notes, setNotes]       = useState(ex.notes ?? '')
+  const [exType, setExType]     = useState(getExerciseType(ex))
+  const [supersetId, setSsId]   = useState(ex.supersetId ?? null)
+
+  // Unique supersets in this workout (exclude current exercise from member list)
+  const supersets = useMemo(() => {
+    const map = {}
+    logExercises.forEach(e => {
+      if (!e.supersetId) return
+      if (!map[e.supersetId]) map[e.supersetId] = []
+      if (e.id !== ex.id) map[e.supersetId].push(e.name)
+    })
+    return Object.entries(map).map(([id, names]) => ({ id, names }))
+  }, [logExercises, ex.id])
 
   function handleSave() {
-    onSave(exIdx, name.trim() || ex.name, notes.trim() || null)
+    onSave(exIdx, {
+      name:         name.trim() || ex.name,
+      notes:        notes.trim() || null,
+      exerciseType: exType,
+      supersetId,
+    })
     onClose()
   }
+
+  const inputCls = 'w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/40" />
       <div
-        className="relative bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg"
-        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        className="relative bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg overflow-y-auto"
+        style={{ maxHeight: '90vh', paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="pt-3 pb-1 flex justify-center">
           <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full" />
         </div>
-        <div className="px-5 pt-2 pb-4">
-          <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">Edit Exercise</h3>
-          <div className="flex flex-col gap-3">
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSave()}
-                autoFocus
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
-              />
-            </div>
-            <div>
-              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Notes</label>
-              <textarea
-                value={notes}
-                onChange={e => setNotes(e.target.value)}
-                rows={5}
-                placeholder="Progression, RPE target, coaching cues…"
-                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none"
-              />
+        <div className="px-5 pt-2 pb-4 flex flex-col gap-4">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white">Edit Exercise</h3>
+
+          {/* Name */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Name</label>
+            <input
+              type="text" value={name} autoFocus
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSave()}
+              className={inputCls}
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">Type</label>
+            <div className="grid grid-cols-2 gap-2">
+              {EX_TYPES.map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => setExType(t.value)}
+                  className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-colors ${
+                    exType === t.value
+                      ? 'border-sky-400 bg-sky-50 dark:bg-sky-900/30'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <span className="text-lg leading-none">{t.icon}</span>
+                  <div>
+                    <p className={`text-sm font-semibold leading-tight ${exType === t.value ? 'text-sky-600 dark:text-sky-400' : 'text-gray-700 dark:text-gray-300'}`}>{t.label}</p>
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">{t.sub}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex gap-3 mt-4">
+
+          {/* Superset / Group */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 block">Group / Superset</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSsId(null)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                  supersetId === null
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-transparent'
+                    : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-gray-300'
+                }`}
+              >
+                None
+              </button>
+              {supersets.map(ss => (
+                <button
+                  key={ss.id}
+                  onClick={() => setSsId(ss.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${
+                    supersetId === ss.id
+                      ? 'bg-indigo-600 text-white border-transparent'
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:border-indigo-300'
+                  }`}
+                >
+                  {ss.names.length ? ss.names.slice(0, 2).join(' · ') + (ss.names.length > 2 ? ' +' + (ss.names.length - 2) : '') : 'Empty group'}
+                </button>
+              ))}
+              <button
+                onClick={() => setSsId(generateId())}
+                className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-dashed border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+              >
+                + New group
+              </button>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Notes</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={4}
+              placeholder="Progression, RPE target, coaching cues…"
+              className={`${inputCls} resize-none dark:placeholder-gray-500`}
+            />
+          </div>
+
+          <div className="flex gap-3">
             <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300">
               Cancel
             </button>
@@ -502,8 +611,8 @@ export function LogWorkout() {
     setLogExercises(prev => prev.map((ex, i) => i === exIndex && ex.sets.length > 1 ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) } : ex))
   }
 
-  function updateExerciseInfo(exIndex, name, notes) {
-    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, name, notes } : ex))
+  function updateExerciseInfo(exIndex, updates) {
+    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, ...updates } : ex))
   }
 
   function handleAddExercise(exercise) {
@@ -512,7 +621,7 @@ export function LogWorkout() {
       exerciseId: generateId(),
       name: exercise.name,
       notes: exercise.notes ?? null,
-      isCardio: exercise.category === 'cardio',
+      exerciseType: exercise.category === 'cardio' ? 'cardio' : 'weight',
       restSeconds: 90,
       supersetId: null,
       sets: Array.from({ length: exercise.sets || 3 }, () => ({
@@ -725,12 +834,15 @@ export function LogWorkout() {
                     <span className="text-xs text-indigo-400">{group.items.length} exercises</span>
                   </div>
                   <div className="flex flex-col divide-y divide-gray-100 dark:divide-gray-700">
-                    {group.items.map(({ ex, i: exIdx }) => (
+                    {group.items.map(({ ex, i: exIdx }) => {
+                      const ssExType = getExerciseType(ex)
+                      const ssBadge  = TYPE_META[ssExType]
+                      return (
                       <div key={ex.id} className="px-4 py-3">
                         <div className="mb-3">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
-                            {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+                            {ssBadge.label && <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${ssBadge.cls}`}>{ssBadge.label}</span>}
                             <button onClick={() => setEditingExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
                               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
@@ -739,13 +851,13 @@ export function LogWorkout() {
                           </div>
                           {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
                         </div>
-                        <SetHeader isCardio={ex.isCardio} showRPE={showRPE} />
+                        <SetHeader exerciseType={ssExType} showRPE={showRPE} />
                         {ex.sets.map((set, setIdx) => (
                           <SetRow
                             key={set.id}
                             set={set} setIndex={setIdx}
                             prevSet={prevLookup[ex.name]?.[setIdx]}
-                            isCardio={ex.isCardio} showRPE={showRPE}
+                            exerciseType={ssExType} showRPE={showRPE}
                             canRemove={ex.sets.length > 1}
                             onChange={updated => updateSet(exIdx, setIdx, updated)}
                             onToggleDone={done => {
@@ -759,7 +871,8 @@ export function LogWorkout() {
                           + Add Set
                         </button>
                       </div>
-                    ))}
+                      )
+                    })}
                   </div>
                   <div className="px-4 pb-3">
                     <RestTimerRow timerId={ssTimerId} restSeconds={ssRestSeconds} onChangeRest={updateRestSeconds} timer={timer} onStart={startTimer} onStop={stopTimer} />
@@ -813,6 +926,7 @@ export function LogWorkout() {
         <ExerciseEditSheet
           ex={editingExercise.ex}
           exIdx={editingExercise.exIdx}
+          logExercises={logExercises}
           onSave={updateExerciseInfo}
           onClose={() => setEditingExercise(null)}
         />
