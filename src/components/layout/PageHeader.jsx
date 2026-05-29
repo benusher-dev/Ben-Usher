@@ -1,17 +1,25 @@
 import { useApp } from '../../store/AppContext'
 
-export function PageHeader({ title, action }) {
+export function PageHeader({ title, action, accent = false }) {
   const { isDark, toggleDark } = useApp()
 
   return (
-    <header className="sticky top-0 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700 z-30 flex-shrink-0">
+    <header className={`sticky top-0 z-30 flex-shrink-0 ${
+      accent
+        ? 'bg-gradient-to-r from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/20'
+        : 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm border-b border-gray-100 dark:border-gray-700'
+    }`}>
       <div className="flex items-center justify-between h-14 px-4 max-w-lg mx-auto">
-        <h1 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h1>
+        <h1 className={`text-lg font-bold ${accent ? 'text-white' : 'text-gray-900 dark:text-white'}`}>{title}</h1>
         <div className="flex items-center gap-2">
           {action && <div>{action}</div>}
           <button
             onClick={toggleDark}
-            className="p-1.5 rounded-xl text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className={`p-1.5 rounded-xl transition-colors ${
+              accent
+                ? 'text-white/70 hover:text-white hover:bg-white/20'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
             aria-label="Toggle dark mode"
           >
             {isDark ? (

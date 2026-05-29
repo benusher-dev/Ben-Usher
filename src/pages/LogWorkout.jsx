@@ -529,14 +529,15 @@ export function LogWorkout() {
       <div className="flex flex-col h-full">
         <PageHeader
           title={selectedTemplate.name}
+          accent
           action={
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-mono font-semibold text-gray-500 dark:text-gray-400 tabular-nums bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg">
+              <span className="text-xs font-mono font-semibold text-white/90 tabular-nums bg-white/20 px-2 py-1 rounded-lg">
                 {formatElapsed(elapsed)}
               </span>
               <button
                 onClick={() => setShowPlates(true)}
-                className="p-1.5 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20 transition-colors"
                 title="Plate Calculator"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75">
@@ -552,7 +553,7 @@ export function LogWorkout() {
               </button>
               <button
                 onClick={() => setShow1RM(true)}
-                className="p-1.5 rounded-xl text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-colors"
+                className="p-1.5 rounded-xl text-white/70 hover:text-amber-200 hover:bg-white/20 transition-colors"
                 title="1RM Estimator"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -566,7 +567,7 @@ export function LogWorkout() {
               </button>
               <button
                 onClick={() => setShowSettings(true)}
-                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="p-1.5 rounded-xl text-white/70 hover:text-white hover:bg-white/20 transition-colors"
                 title="Workout Settings"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -576,7 +577,7 @@ export function LogWorkout() {
                   <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" /><line x1="17" y1="16" x2="23" y2="16" />
                 </svg>
               </button>
-              <button onClick={handleCancel} className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium">
+              <button onClick={handleCancel} className="text-sm text-white/70 hover:text-white font-medium transition-colors">
                 Cancel
               </button>
             </div>
