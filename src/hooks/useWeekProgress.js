@@ -13,9 +13,9 @@ export function useWeekProgress() {
     setProgress(prev => ({ ...prev, [templateId]: Math.max(1, Number(week) || 1) }))
   }
 
-  function incrementWeek(templateId) {
+  function incrementWeek(templateId, max = 8) {
     if (!templateId) return
-    setProgress(prev => ({ ...prev, [templateId]: (prev[templateId] ?? 1) + 1 }))
+    setProgress(prev => ({ ...prev, [templateId]: Math.min(max, (prev[templateId] ?? 1) + 1) }))
   }
 
   return { getWeek, setWeek, incrementWeek }

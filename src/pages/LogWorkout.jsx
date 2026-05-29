@@ -472,7 +472,7 @@ function ExerciseEditSheet({ ex, exIdx, logExercises, onSave, onClose }) {
                 type="button"
                 onClick={() => setNoteLocked(v => !v)}
                 title={noteLocked ? 'Saves to template — tap to make session-only' : 'Session only — tap to save to template'}
-                className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className={`flex items-center gap-1 text-xs transition-colors ${noteLocked ? 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300' : 'text-amber-500 dark:text-amber-400 hover:text-amber-600'}`}
               >
                 {noteLocked ? (
                   <>
@@ -543,10 +543,11 @@ function SettingsSheet({ autoRest, showRPE, onToggleAutoRest, onToggleRPE, weekN
                     onClick={() => onSetWeek(Math.max(1, weekNum - 1))}
                     className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-base hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
                   >−</button>
-                  <span className="w-8 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">{weekNum}</span>
+                  <span className={`w-8 text-center text-sm font-bold tabular-nums ${weekNum >= 8 ? 'text-amber-500' : 'text-gray-900 dark:text-white'}`}>{weekNum >= 8 ? '🏁' : weekNum}</span>
                   <button
-                    onClick={() => onSetWeek(weekNum + 1)}
-                    className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-base hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center"
+                    onClick={() => onSetWeek(Math.min(8, weekNum + 1))}
+                    disabled={weekNum >= 8}
+                    className="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-base hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed"
                   >+</button>
                 </div>
               </div>
@@ -836,8 +837,8 @@ export function LogWorkout() {
           accent
           action={
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-white/80 bg-white/20 px-2 py-1 rounded-lg">
-                Wk {getWeek(selectedTemplate.id)}
+              <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${getWeek(selectedTemplate.id) >= 8 ? 'bg-amber-400/90 text-white' : 'text-white/80 bg-white/20'}`}>
+                {getWeek(selectedTemplate.id) >= 8 ? '🏁 Wk 8' : `Wk ${getWeek(selectedTemplate.id)}`}
               </span>
               <span className="text-xs font-mono font-semibold text-white/90 tabular-nums bg-white/20 px-2 py-1 rounded-lg">
                 {formatElapsed(elapsed)}
