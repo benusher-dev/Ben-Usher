@@ -246,7 +246,7 @@ function RestTimerRow({ timerId, restSeconds, onChangeRest, timer, onStart, onSt
 }
 
 // ── Exercise card (single) ────────────────────────────────────────────────────
-function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer }) {
+function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet, addSet, removeSet, updateRestSeconds, startTimer, stopTimer, onEditExercise }) {
   const timerId = `ex_${ex.id}`
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm p-4">
@@ -254,6 +254,11 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
         <div className="flex items-center gap-2">
           <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
           {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+          <button onClick={() => onEditExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+            </svg>
+          </button>
         </div>
         {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
       </div>
@@ -277,6 +282,66 @@ function ExerciseCard({ ex, exIdx, prevSets, timer, showRPE, autoRest, updateSet
         + Add Set
       </button>
       <RestTimerRow timerId={timerId} restSeconds={ex.restSeconds} onChangeRest={updateRestSeconds} timer={timer} onStart={startTimer} onStop={stopTimer} />
+    </div>
+  )
+}
+
+// ── Exercise edit sheet ───────────────────────────────────────────────────────
+function ExerciseEditSheet({ ex, exIdx, onSave, onClose }) {
+  const [name, setName]   = useState(ex.name)
+  const [notes, setNotes] = useState(ex.notes ?? '')
+
+  function handleSave() {
+    onSave(exIdx, name.trim() || ex.name, notes.trim() || null)
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/40" />
+      <div
+        className="relative bg-white dark:bg-gray-800 rounded-t-3xl w-full max-w-lg"
+        style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="pt-3 pb-1 flex justify-center">
+          <div className="w-10 h-1 bg-gray-200 dark:bg-gray-600 rounded-full" />
+        </div>
+        <div className="px-5 pt-2 pb-4">
+          <h3 className="text-base font-bold text-gray-900 dark:text-white mb-4">Edit Exercise</h3>
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSave()}
+                autoFocus
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 block">Notes</label>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={5}
+                placeholder="Progression, RPE target, coaching cues…"
+                className="w-full rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-white dark:placeholder-gray-500 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-4">
+            <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300">
+              Cancel
+            </button>
+            <button onClick={handleSave} className="flex-1 py-2.5 rounded-xl bg-sky-500 text-white text-sm font-semibold hover:bg-sky-600 transition-colors">
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -343,6 +408,7 @@ export function LogWorkout() {
   const [show1RM, setShow1RM] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [showAddExercise, setShowAddExercise] = useState(false)
+  const [editingExercise, setEditingExercise] = useState(null) // { ex, exIdx }
   const [autoRest, setAutoRest] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gwt_auto_rest') ?? 'false') } catch { return false }
   })
@@ -434,6 +500,10 @@ export function LogWorkout() {
 
   function removeSet(exIndex, setIndex) {
     setLogExercises(prev => prev.map((ex, i) => i === exIndex && ex.sets.length > 1 ? { ...ex, sets: ex.sets.filter((_, j) => j !== setIndex) } : ex))
+  }
+
+  function updateExerciseInfo(exIndex, name, notes) {
+    setLogExercises(prev => prev.map((ex, i) => i === exIndex ? { ...ex, name, notes } : ex))
   }
 
   function handleAddExercise(exercise) {
@@ -636,6 +706,7 @@ export function LogWorkout() {
                     timer={timer} showRPE={showRPE} autoRest={autoRest}
                     updateSet={updateSet} addSet={addSet} removeSet={removeSet}
                     updateRestSeconds={updateRestSeconds} startTimer={startTimer} stopTimer={stopTimer}
+                    onEditExercise={setEditingExercise}
                   />
                 )
               }
@@ -660,6 +731,11 @@ export function LogWorkout() {
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-gray-900 dark:text-white flex-1">{ex.name}</p>
                             {ex.isCardio && <span className="text-xs font-semibold text-sky-500 bg-sky-50 dark:bg-sky-900/30 px-2 py-0.5 rounded-full">🏃 Cardio</span>}
+                            <button onClick={() => setEditingExercise({ ex, exIdx })} className="p-1 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors" title="Edit exercise">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                              </svg>
+                            </button>
                           </div>
                           {ex.notes && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 leading-relaxed">{ex.notes}</p>}
                         </div>
@@ -731,6 +807,14 @@ export function LogWorkout() {
           onToggleAutoRest={() => setAutoRest(v => !v)}
           onToggleRPE={() => setShowRPE(v => !v)}
           onClose={() => setShowSettings(false)}
+        />
+      )}
+      {editingExercise && (
+        <ExerciseEditSheet
+          ex={editingExercise.ex}
+          exIdx={editingExercise.exIdx}
+          onSave={updateExerciseInfo}
+          onClose={() => setEditingExercise(null)}
         />
       )}
     </>
