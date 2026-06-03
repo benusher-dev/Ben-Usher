@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, claude/gym-workout-tracker-X21e9]
+    branches: [main, claude/gym-workout-tracker-X21e9, claude/netops-console-tool-fqipA]
   workflow_dispatch:
 
 permissions:
