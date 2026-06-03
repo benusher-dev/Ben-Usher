@@ -6,6 +6,7 @@ import { LogWorkout } from './pages/LogWorkout'
 import { History } from './pages/History'
 import { Progress } from './pages/Progress'
 import { BodyWeightPage } from './pages/BodyWeightPage'
+import NetOpsConsole from './pages/NetOpsConsole'
 
 function Pages() {
   const { activePage } = useApp()
@@ -19,6 +20,7 @@ function Pages() {
         {activePage === 'history'     && <History />}
         {activePage === 'progress'    && <Progress />}
         {activePage === 'bodyweight'  && <BodyWeightPage />}
+        {activePage === 'netops'      && <div className="flex-1 overflow-y-auto"><NetOpsConsole /></div>}
       </div>
     </main>
   )
